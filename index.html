@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NeonPad - Pocket Sampler</title>
+    <title>NeonPad Pro - Pocket Sampler</title>
     <style>
         :root {
             --bg-dark: #0a0b0d;
@@ -24,10 +24,10 @@
 
         body {
             margin: 0;
-            padding: 16px;
+            padding: 12px;
             background-color: var(--bg-dark);
             color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             user-select: none;
             -webkit-user-select: none;
         }
@@ -37,22 +37,22 @@
             margin: 0 auto;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 12px;
         }
 
-        /* Top Header & BPM Control */
+        /* Header & Master Controls */
         .header-panel {
             display: flex;
             justify-content: space-between;
             align-items: center;
             background: var(--panel-bg);
             border: 1px solid var(--panel-border);
-            padding: 12px 16px;
+            padding: 12px;
             border-radius: 12px;
         }
 
         h1 {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 700;
             letter-spacing: 1px;
             margin: 0;
@@ -60,18 +60,24 @@
             text-transform: uppercase;
         }
 
+        .master-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
         .bpm-control {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 6px;
             background: rgba(0,0,0,0.2);
-            padding: 6px 12px;
+            padding: 6px 10px;
             border-radius: 8px;
             border: 1px solid var(--panel-border);
         }
 
         .bpm-control label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             text-transform: uppercase;
             color: var(--text-muted);
             font-weight: 600;
@@ -81,11 +87,29 @@
             background: transparent;
             border: none;
             color: var(--text-main);
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: bold;
-            width: 45px;
+            width: 40px;
             text-align: center;
             outline: none;
+        }
+
+        .mute-btn {
+            background: #ff336622;
+            border: 1px solid var(--accent-alert);
+            color: var(--accent-alert);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        .mute-btn.active {
+            background: var(--accent-alert);
+            color: #000;
+            box-shadow: 0 0 10px rgba(255, 51, 102, 0.4);
         }
 
         /* Editor Panel */
@@ -93,14 +117,14 @@
             background: var(--panel-bg);
             border: 1px solid var(--panel-border);
             border-radius: 16px;
-            padding: 16px;
+            padding: 14px;
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 10px;
         }
 
         .panel-header {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             color: var(--text-muted);
@@ -108,51 +132,47 @@
             font-weight: 700;
         }
 
-        /* Record Button styling */
         .record-btn {
             background: linear-gradient(135deg, #2c151b 0%, #1a0a0d 100%);
             border: 1px solid var(--accent-alert);
             color: var(--accent-alert);
-            padding: 14px;
+            padding: 12px;
             border-radius: 10px;
             font-weight: 700;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            transition: all 0.2s ease;
         }
 
         .record-btn.recording {
             background: var(--accent-alert);
             color: #000;
             box-shadow: 0 0 15px rgba(255, 51, 102, 0.4);
-            animation: pulse 1.5s infinite;
         }
 
-        /* Custom Modern Sliders */
-        .control-row {
+        /* FX Grid Layout */
+        .fx-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            gap: 8px;
         }
 
         .control-group {
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(255, 255, 255, 0.02);
             border: 1px solid var(--panel-border);
-            padding: 10px;
+            padding: 8px;
             border-radius: 8px;
         }
 
         .control-label {
             display: flex;
             justify-content: space-between;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text-muted);
-            margin-bottom: 6px;
-            font-weight: 500;
+            margin-bottom: 4px;
         }
 
         .control-label span {
@@ -171,21 +191,19 @@
 
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
             background: var(--accent-neon);
             cursor: pointer;
-            box-shadow: 0 0 6px var(--accent-neon);
         }
 
-        /* Loop Section Button */
         .loop-bar {
             display: flex;
             align-items: center;
             gap: 10px;
             background: rgba(0,0,0,0.15);
-            padding: 8px;
+            padding: 6px;
             border-radius: 10px;
             border: 1px solid var(--panel-border);
         }
@@ -194,47 +212,44 @@
             background: #252a3a;
             border: 1px solid transparent;
             color: var(--text-muted);
-            padding: 10px 14px;
+            padding: 10px;
             border-radius: 8px;
             font-weight: 700;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
             cursor: pointer;
         }
 
         .loop-toggle.active {
-            background: linear-gradient(135deg, rgba(0, 255, 204, 0.1) 0%, rgba(0, 0, 0, 0) 100%);
             border-color: var(--accent-neon);
             color: var(--accent-neon);
-            box-shadow: inset 0 0 8px rgba(0, 255, 204, 0.1);
+            background: rgba(0, 255, 204, 0.05);
         }
 
-        /* Pad Hardware Grid */
+        /* Pad Hardware Grid (2 Columns, 4 Rows) */
         .grid-panel {
             background: var(--panel-bg);
             border: 1px solid var(--panel-border);
             border-radius: 16px;
-            padding: 16px;
+            padding: 12px;
         }
 
         .pad-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
         }
 
         .pad {
             background: var(--pad-empty);
             border: 1px solid #1c202e;
-            border-radius: 12px;
-            aspect-ratio: 1.1;
+            border-radius: 10px;
+            aspect-ratio: 1;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 12px;
-            position: relative;
-            box-shadow: inset 0 -4px 0 rgba(0,0,0,0.4);
-            transition: all 0.05s ease;
+            padding: 10px;
+            box-shadow: inset 0 -3px 0 rgba(0,0,0,0.4);
         }
 
         .pad.has-sample {
@@ -244,23 +259,19 @@
 
         .pad.selected {
             border: 2px solid var(--accent-neon);
-            box-shadow: inset 0 -4px 0 rgba(0,0,0,0.4), 0 0 10px rgba(0, 255, 204, 0.2);
         }
 
         .pad.playing {
             background: var(--accent-neon) !important;
-            box-shadow: 0 0 20px var(--accent-neon);
-            transform: translateY(2px);
-            box-shadow: inset 0 -1px 0 rgba(0,0,0,0.4), 0 0 20px var(--accent-neon);
+            box-shadow: inset 0 -1px 0 rgba(0,0,0,0.4), 0 0 15px var(--accent-neon);
         }
 
-        .pad.playing .pad-label, .pad.playing .pad-status {
+        .pad.playing * {
             color: #050608 !important;
-            font-weight: 800;
         }
 
         .pad-label {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 700;
             color: var(--text-muted);
         }
@@ -270,17 +281,10 @@
         }
 
         .pad-status {
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
             color: var(--text-muted);
             opacity: 0.6;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(0.98); opacity: 0.8; }
-            100% { transform: scale(1); }
         }
     </style>
 </head>
@@ -288,19 +292,21 @@
 
 <div class="container">
     <div class="header-panel">
-        <h1>NeonPad</h1>
-        <div class="bpm-control">
-            <label>BPM</label>
-            <input type="number" id="bpm" min="60" max="220" value="120">
+        <h1>NeonPad Pro</h1>
+        <div class="master-actions">
+            <button id="mute-all-btn" class="mute-btn">Mute Loops</button>
+            <div class="bpm-control">
+                <label>BPM</label>
+                <input type="number" id="bpm" min="60" max="220" value="120">
+            </div>
         </div>
     </div>
 
     <div class="editor-panel">
-        <div class="panel-header" id="selected-pad-title">Select a hardware pad</div>
-        
-        <button id="record-btn" class="record-btn">● Record From Mic</button>
+        <div class="panel-header" id="selected-pad-title">Select a pad</div>
+        <button id="record-btn" class="record-btn">● Record Mic</button>
 
-        <div class="control-row">
+        <div class="fx-grid">
             <div class="control-group">
                 <div class="control-label">Trim Start <span id="start-val">0%</span></div>
                 <input type="range" id="trim-start" min="0" max="100" value="0">
@@ -309,23 +315,30 @@
                 <div class="control-label">Trim End <span id="end-val">100%</span></div>
                 <input type="range" id="trim-end" min="0" max="100" value="100">
             </div>
-        </div>
 
-        <div class="control-row">
             <div class="control-group">
-                <div class="control-label">Pitch Shift <span id="pitch-val">1.0x</span></div>
+                <div class="control-label">Pitch <span id="pitch-val">1.0x</span></div>
                 <input type="range" id="fx-pitch" min="0.5" max="2.0" step="0.05" value="1.0">
             </div>
             <div class="control-group">
-                <div class="control-label">Lo-Fi Grind <span id="fx-dist-val">Off</span></div>
+                <div class="control-label">Bit-Grind <span id="fx-dist-val">Off</span></div>
                 <input type="range" id="fx-dist" min="0" max="100" value="0">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">Filter Cutoff <span id="fx-filter-val">Max</span></div>
+                <input type="range" id="fx-filter" min="200" max="20000" step="100" value="20000">
+            </div>
+            <div class="control-group">
+                <div class="control-label">Delay Echo <span id="fx-delay-val">Off</span></div>
+                <input type="range" id="fx-delay" min="0" max="90" value="0">
             </div>
         </div>
 
         <div class="loop-bar">
             <button id="loop-toggle-btn" class="loop-toggle">Loop Off</button>
-            <div class="control-group" style="flex: 1; border: none; padding: 0 4px; background: transparent;">
-                <div class="control-label">Interval <span id="interval-val">4 Beats</span></div>
+            <div class="control-group" style="flex: 1; border: none; padding: 0; background: transparent;">
+                <div class="control-label">Loop Sync <span id="interval-val">4 Beats</span></div>
                 <input type="range" id="loop-interval" min="1" max="16" step="1" value="4">
             </div>
         </div>
@@ -333,42 +346,47 @@
 
     <div class="grid-panel">
         <div class="pad-grid">
-            <div class="pad" data-pad="1"><span class="pad-label">PAD A</span><span class="pad-status">Empty</span></div>
-            <div class="pad" data-pad="2"><span class="pad-label">PAD B</span><span class="pad-status">Empty</span></div>
-            <div class="pad" data-pad="3"><span class="pad-label">PAD C</span><span class="pad-status">Empty</span></div>
-            <div class="pad" data-pad="4"><span class="pad-label">PAD D</span><span class="pad-status">Empty</span></div>
-            <div class="pad" data-pad="5"><span class="pad-label">PAD E</span><span class="pad-status">Empty</span></div>
-            <div class="pad" data-pad="6"><span class="pad-label">PAD F</span><span class="pad-status">Empty</span></div>
+            <div class="pad" data-pad="1"><span class="pad-label">PAD 1</span><span class="pad-status">Empty</span></div>
+            <div class="pad" data-pad="2"><span class="pad-label">PAD 2</span><span class="pad-status">Empty</span></div>
+            <div class="pad" data-pad="3"><span class="pad-label">PAD 3</span><span class="pad-status">Empty</span></div>
+            <div class="pad" data-pad="4"><span class="pad-label">PAD 4</span><span class="pad-status">Empty</span></div>
+            <div class="pad" data-pad="5"><span class="pad-label">PAD 5</span><span class="pad-status">Empty</span></div>
+            <div class="pad" data-pad="6"><span class="pad-label">PAD 6</span><span class="pad-status">Empty</span></div>
+            <div class="pad" data-pad="7"><span class="pad-label">PAD 7</span><span class="pad-status">Empty</span></div>
+            <div class="pad" data-pad="8"><span class="pad-label">PAD 8</span><span class="pad-status">Empty</span></div>
         </div>
     </div>
 </div>
 
 <script>
-    // --- Audio System Architecture ---
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     let audioCtx;
     
-    const padsData = {
-        1: { rawBuffer: null, start: 0, end: 1, pitch: 1, dist: 0, isLooping: false, interval: 4, timerId: null },
-        2: { rawBuffer: null, start: 0, end: 1, pitch: 1, dist: 0, isLooping: false, interval: 4, timerId: null },
-        3: { rawBuffer: null, start: 0, end: 1, pitch: 1, dist: 0, isLooping: false, interval: 4, timerId: null },
-        4: { rawBuffer: null, start: 0, end: 1, pitch: 1, dist: 0, isLooping: false, interval: 4, timerId: null },
-        5: { rawBuffer: null, start: 0, end: 1, pitch: 1, dist: 0, isLooping: false, interval: 4, timerId: null },
-        6: { rawBuffer: null, start: 0, end: 1, pitch: 1, dist: 0, isLooping: false, interval: 4, timerId: null },
-    };
+    // Config setup expanded to 8 Pads
+    const padsData = {};
+    for (let i = 1; i <= 8; i++) {
+        padsData[i] = { 
+            rawBuffer: null, start: 0, end: 1, pitch: 1, dist: 0, 
+            filter: 20000, delayMix: 0, isLooping: false, interval: 4, timerId: null 
+        };
+    }
 
     let currentPad = 1;
     let mediaRecorder;
     let audioChunks = [];
     let bpm = 120;
+    let globalMute = false;
 
-    // DOM Elements
+    // DOM Links
     const padsEls = document.querySelectorAll('.pad');
     const recordBtn = document.getElementById('record-btn');
+    const muteAllBtn = document.getElementById('mute-all-btn');
     const trimStartSlider = document.getElementById('trim-start');
     const trimEndSlider = document.getElementById('trim-end');
     const pitchSlider = document.getElementById('fx-pitch');
     const distSlider = document.getElementById('fx-dist');
+    const filterSlider = document.getElementById('fx-filter');
+    const delaySlider = document.getElementById('fx-delay');
     const loopToggleBtn = document.getElementById('loop-toggle-btn');
     const loopIntervalSlider = document.getElementById('loop-interval');
     const bpmInput = document.getElementById('bpm');
@@ -378,14 +396,11 @@
         if (audioCtx.state === 'suspended') audioCtx.resume();
     }
 
-    // --- UI Dynamic Rendering ---
     function selectPad(id) {
         currentPad = id;
         padsEls.forEach(p => p.classList.remove('selected'));
-        const activePadEl = document.querySelector(`[data-pad="${id}"]`);
-        activePadEl.classList.add('selected');
-        
-        document.getElementById('selected-pad-title').innerText = `Editing Pad ${String.fromCharCode(64 + id)}`;
+        document.querySelector(`[data-pad="${id}"]`).classList.add('selected');
+        document.getElementById('selected-pad-title').innerText = `Modulating Pad ${id}`;
         
         const data = padsData[id];
         trimStartSlider.value = data.start * 100;
@@ -396,6 +411,10 @@
         document.getElementById('pitch-val').innerText = data.pitch.toFixed(2) + 'x';
         distSlider.value = data.dist;
         document.getElementById('fx-dist-val').innerText = data.dist > 0 ? data.dist + '%' : 'Off';
+        filterSlider.value = data.filter;
+        document.getElementById('fx-filter-val').innerText = data.filter === 20000 ? 'Max' : data.filter + 'Hz';
+        delaySlider.value = data.delayMix;
+        document.getElementById('fx-delay-val').innerText = data.delayMix > 0 ? data.delayMix + '%' : 'Off';
         
         if (data.isLooping) {
             loopToggleBtn.innerText = "Loop On";
@@ -408,8 +427,10 @@
         document.getElementById('interval-val').innerText = data.interval + (data.interval === 1 ? ' Beat' : ' Beats');
     }
 
-    // --- Core Sound Generation ---
-    function playPad(id) {
+    // --- Audio Pipeline Configuration ---
+    function playPad(id, isLoopTrigger = false) {
+        if (globalMute && isLoopTrigger) return; // Block loops if master muted
+        
         initAudio();
         const data = padsData[id];
         if (!data.rawBuffer) return;
@@ -426,24 +447,54 @@
         const startTime = data.start * duration;
         const durationToPlay = (data.end * duration) - startTime;
 
-        let lastNode = source;
+        let currentNode = source;
 
+        // 1. Distortion Node
         if (data.dist > 0) {
             const distortion = audioCtx.createWaveShaper();
             distortion.curve = makeDistortionCurve(data.dist * 2);
             distortion.oversample = '4x';
-            lastNode.connect(distortion);
-            lastNode = distortion;
+            currentNode.connect(distortion);
+            currentNode = distortion;
         }
 
-        lastNode.connect(audioCtx.destination);
+        // 2. Low-Pass Filter Node
+        if (data.filter < 20000) {
+            const filterNode = audioCtx.createBiquadFilter();
+            filterNode.type = 'lowpass';
+            filterNode.frequency.setValueAtTime(data.filter, audioCtx.currentTime);
+            currentNode.connect(filterNode);
+            currentNode = filterNode;
+        }
+
+        // 3. Delay Node with Feedback Matrix
+        if (data.delayMix > 0) {
+            const delayNode = audioCtx.createDelay();
+            const feedbackNode = audioCtx.createGain();
+            const mixNode = audioCtx.createGain();
+
+            delayNode.delayTime.value = (60 / bpm) * 0.5; // Syncs echo to half beats
+            feedbackNode.gain.value = 0.4; // Feedback persistence
+            mixNode.gain.value = data.delayMix / 100;
+
+            currentNode.connect(audioCtx.destination); // Send original clean dry signal through
+            
+            currentNode.connect(delayNode);
+            delayNode.connect(feedbackNode);
+            feedbackNode.connect(delayNode); // loop feedback line
+            delayNode.connect(mixNode);
+            mixNode.connect(audioCtx.destination);
+        } else {
+            currentNode.connect(audioCtx.destination);
+        }
+
         if (durationToPlay > 0) {
             source.start(0, startTime, durationToPlay);
         }
     }
 
     function makeDistortionCurve(amount) {
-        const k = typeof amount === 'number' ? amount : 50;
+        const k = amount;
         const n_samples = 44100;
         const curve = new Float32Array(n_samples);
         const deg = Math.PI / 180;
@@ -460,17 +511,29 @@
         if (!data.isLooping || !data.rawBuffer) return;
 
         const intervalMs = (60 / bpm) * data.interval * 1000;
-        playPad(id);
-        data.timerId = setInterval(() => playPad(id), intervalMs);
+        playPad(id, true);
+        data.timerId = setInterval(() => playPad(id, true), intervalMs);
     }
 
-    // --- Record Logic ---
+    // Master Loop Mute Switch
+    muteAllBtn.addEventListener('click', () => {
+        globalMute = !globalMute;
+        if (globalMute) {
+            muteAllBtn.innerText = "Loops Muted";
+            muteAllBtn.classList.add('active');
+        } else {
+            muteAllBtn.innerText = "Mute Loops";
+            muteAllBtn.classList.remove('active');
+        }
+    });
+
+    // --- Recording Engine ---
     recordBtn.addEventListener('click', async () => {
         initAudio();
         if (mediaRecorder && mediaRecorder.state === "recording") {
             mediaRecorder.stop();
             recordBtn.classList.remove('recording');
-            recordBtn.innerText = "● Record From Mic";
+            recordBtn.innerText = "● Record Mic";
         } else {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -486,9 +549,7 @@
                         padsData[currentPad].rawBuffer = buffer;
                         const targetPad = document.querySelector(`[data-pad="${currentPad}"]`);
                         targetPad.classList.add('has-sample');
-                        targetPad.querySelector('.pad-status').innerText = "Loaded";
-                        padsData[currentPad].start = 0;
-                        padsData[currentPad].end = 1;
+                        targetPad.querySelector('.pad-status').innerText = "Assigned";
                         selectPad(currentPad); 
                     });
                 };
@@ -497,76 +558,19 @@
                 recordBtn.classList.add('recording');
                 recordBtn.innerText = "■ Stop Recording";
             } catch (err) {
-                alert("Microphone connection failed.");
+                alert("Audio device input error.");
             }
         }
     });
 
-    // --- Event Subscriptions ---
+    // --- Controller Subscriptions ---
     padsEls.forEach(pad => {
         ['touchstart', 'mousedown'].forEach(evtType => {
             pad.addEventListener(evtType, (e) => {
                 e.preventDefault();
                 const id = parseInt(pad.dataset.pad);
                 selectPad(id);
-                playPad(id);
+                playPad(id, false); // Direct tap always ignores global loop mute
             });
         });
-    });
-
-    trimStartSlider.addEventListener('input', (e) => {
-        const val = e.target.value / 100;
-        if (val < padsData[currentPad].end) {
-            padsData[currentPad].start = val;
-            document.getElementById('start-val').innerText = e.target.value + '%';
-        } else {
-            e.target.value = padsData[currentPad].start * 100;
-        }
-    });
-
-    trimEndSlider.addEventListener('input', (e) => {
-        const val = e.target.value / 100;
-        if (val > padsData[currentPad].start) {
-            padsData[currentPad].end = val;
-            document.getElementById('end-val').innerText = e.target.value + '%';
-        } else {
-            e.target.value = padsData[currentPad].end * 100;
-        }
-    });
-
-    pitchSlider.addEventListener('input', (e) => {
-        padsData[currentPad].pitch = parseFloat(e.target.value);
-        document.getElementById('pitch-val').innerText = padsData[currentPad].pitch.toFixed(2) + 'x';
-    });
-
-    distSlider.addEventListener('input', (e) => {
-        padsData[currentPad].dist = parseInt(e.target.value);
-        document.getElementById('fx-dist-val').innerText = e.target.value > 0 ? e.target.value + '%' : 'Off';
-    });
-
-    loopToggleBtn.addEventListener('click', () => {
-        const data = padsData[currentPad];
-        data.isLooping = !data.isLooping;
-        setupLoop(currentPad);
-        selectPad(currentPad);
-    });
-
-    loopIntervalSlider.addEventListener('input', (e) => {
-        padsData[currentPad].interval = parseInt(e.target.value);
-        document.getElementById('interval-val').innerText = e.target.value + (e.target.value == 1 ? ' Beat' : ' Beats');
-        if(padsData[currentPad].isLooping) setupLoop(currentPad);
-    });
-
-    bpmInput.addEventListener('input', (e) => {
-        let val = parseInt(e.target.value);
-        if (isNaN(val) || val < 60) return;
-        bpm = val;
-        for (let id in padsData) {
-            if (padsData[id].isLooping) setupLoop(id);
-        }
-    });
-
-    selectPad(1);
-</script>
-</body>
-</html>
+   
