@@ -1,363 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NeonPad Pro - Pocket Sampler</title>
-    <style>
-        :root {
-            --bg-dark: #0a0b0d;
-            --panel-bg: #14161d;
-            --panel-border: #222633;
-            --accent-neon: #00ffcc;
-            --accent-alert: #ff3366;
-            --text-main: #f0f2f5;
-            --text-muted: #6c7a9c;
-            --pad-empty: #1e2230;
-            --pad-ready: #2d354d;
-        }
-
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            margin: 0;
-            padding: 12px;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        .container {
-            max-width: 480px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        /* Header & Master Controls */
-        .header-panel {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--panel-bg);
-            border: 1px solid var(--panel-border);
-            padding: 12px;
-            border-radius: 12px;
-        }
-
-        h1 {
-            font-size: 1.1rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-            margin: 0;
-            color: var(--accent-neon);
-            text-transform: uppercase;
-        }
-
-        .master-actions {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .bpm-control {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(0,0,0,0.2);
-            padding: 6px 10px;
-            border-radius: 8px;
-            border: 1px solid var(--panel-border);
-        }
-
-        .bpm-control label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-
-        .bpm-control input[type="number"] {
-            background: transparent;
-            border: none;
-            color: var(--text-main);
-            font-size: 1rem;
-            font-weight: bold;
-            width: 40px;
-            text-align: center;
-            outline: none;
-        }
-
-        .mute-btn {
-            background: #ff336622;
-            border: 1px solid var(--accent-alert);
-            color: var(--accent-alert);
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            cursor: pointer;
-        }
-
-        .mute-btn.active {
-            background: var(--accent-alert);
-            color: #000;
-            box-shadow: 0 0 10px rgba(255, 51, 102, 0.4);
-        }
-
-        /* Editor Panel */
-        .editor-panel {
-            background: var(--panel-bg);
-            border: 1px solid var(--panel-border);
-            border-radius: 16px;
-            padding: 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .panel-header {
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-muted);
-            margin: 0;
-            font-weight: 700;
-        }
-
-        .record-btn {
-            background: linear-gradient(135deg, #2c151b 0%, #1a0a0d 100%);
-            border: 1px solid var(--accent-alert);
-            color: var(--accent-alert);
-            padding: 12px;
-            border-radius: 10px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .record-btn.recording {
-            background: var(--accent-alert);
-            color: #000;
-            box-shadow: 0 0 15px rgba(255, 51, 102, 0.4);
-        }
-
-        /* FX Grid Layout */
-        .fx-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
-        .control-group {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--panel-border);
-            padding: 8px;
-            border-radius: 8px;
-        }
-
-        .control-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            margin-bottom: 4px;
-        }
-
-        .control-label span {
-            color: var(--text-main);
-            font-weight: bold;
-        }
-
-        input[type="range"] {
-            -webkit-appearance: none;
-            width: 100%;
-            height: 4px;
-            background: #252a3a;
-            border-radius: 2px;
-            outline: none;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: var(--accent-neon);
-            cursor: pointer;
-        }
-
-        .loop-bar {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(0,0,0,0.15);
-            padding: 6px;
-            border-radius: 10px;
-            border: 1px solid var(--panel-border);
-        }
-
-        .loop-toggle {
-            background: #252a3a;
-            border: 1px solid transparent;
-            color: var(--text-muted);
-            padding: 10px;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            cursor: pointer;
-        }
-
-        .loop-toggle.active {
-            border-color: var(--accent-neon);
-            color: var(--accent-neon);
-            background: rgba(0, 255, 204, 0.05);
-        }
-
-        /* Pad Hardware Grid */
-        .grid-panel {
-            background: var(--panel-bg);
-            border: 1px solid var(--panel-border);
-            border-radius: 16px;
-            padding: 12px;
-        }
-
-        .pad-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-        }
-
-        .pad {
-            background: var(--pad-empty);
-            border: 1px solid #1c202e;
-            border-radius: 10px;
-            aspect-ratio: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 10px;
-            box-shadow: inset 0 -3px 0 rgba(0,0,0,0.4);
-        }
-
-        .pad.has-sample {
-            background: var(--pad-ready);
-            border-color: #3d4766;
-        }
-
-        .pad.selected {
-            border: 2px solid var(--accent-neon);
-        }
-
-        .pad.playing {
-            background: var(--accent-neon) !important;
-            box-shadow: inset 0 -1px 0 rgba(0,0,0,0.4), 0 0 15px var(--accent-neon);
-        }
-
-        .pad.playing * {
-            color: #050608 !important;
-        }
-
-        .pad-label {
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--text-muted);
-        }
-
-        .pad.has-sample .pad-label {
-            color: var(--text-main);
-        }
-
-        .pad-status {
-            font-size: 0.6rem;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            opacity: 0.6;
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <div class="header-panel">
-        <h1>NeonPad Pro</h1>
-        <div class="master-actions">
-            <button id="mute-all-btn" class="mute-btn">Mute Loops</button>
-            <div class="bpm-control">
-                <label>BPM</label>
-                <input type="number" id="bpm" min="60" max="220" value="120">
-            </div>
-        </div>
-    </div>
-
-    <div class="editor-panel">
-        <div class="panel-header" id="selected-pad-title">Select a pad</div>
-        <button id="record-btn" class="record-btn">● Record Mic</button>
-
-        <div class="fx-grid">
-            <div class="control-group">
-                <div class="control-label">Trim Start <span id="start-val">0%</span></div>
-                <input type="range" id="trim-start" min="0" max="100" value="0">
-            </div>
-            <div class="control-group">
-                <div class="control-label">Trim End <span id="end-val">100%</span></div>
-                <input type="range" id="trim-end" min="0" max="100" value="100">
-            </div>
-
-            <div class="control-group">
-                <div class="control-label">Pitch <span id="pitch-val">1.0x</span></div>
-                <input type="range" id="fx-pitch" min="0.5" max="2.0" step="0.05" value="1.0">
-            </div>
-            <div class="control-group">
-                <div class="control-label">Bit-Grind <span id="fx-dist-val">Off</span></div>
-                <input type="range" id="fx-dist" min="0" max="100" value="0">
-            </div>
-
-            <div class="control-group">
-                <div class="control-label">Filter Cutoff <span id="fx-filter-val">Max</span></div>
-                <input type="range" id="fx-filter" min="200" max="20000" step="100" value="20000">
-            </div>
-            <div class="control-group">
-                <div class="control-label">Delay Echo <span id="fx-delay-val">Off</span></div>
-                <input type="range" id="fx-delay" min="0" max="90" value="0">
-            </div>
-        </div>
-
-        <div class="loop-bar">
-            <button id="loop-toggle-btn" class="loop-toggle">Loop Off</button>
-            <div class="control-group" style="flex: 1; border: none; padding: 0; background: transparent;">
-                <div class="control-label">Loop Sync <span id="interval-val">4 Beats</span></div>
-                <input type="range" id="loop-interval" min="1" max="16" step="1" value="4">
-            </div>
-        </div>
-    </div>
-
-    <div class="grid-panel">
-        <div class="pad-grid">
-            <div class="pad" data-pad="1"><span class="pad-label">PAD 1</span><span class="pad-status">Empty</span></div>
-            <div class="pad" data-pad="2"><span class="pad-label">PAD 2</span><span class="pad-status">Empty</span></div>
-            <div class="pad" data-pad="3"><span class="pad-label">PAD 3</span><span class="pad-status">Empty</span></div>
-            <div class="pad" data-pad="4"><span class="pad-label">PAD 4</span><span class="pad-status">Empty</span></div>
-            <div class="pad" data-pad="5"><span class="pad-label">PAD 5</span><span class="pad-status">Empty</span></div>
-            <div class="pad" data-pad="6"><span class="pad-label">PAD 6</span><span class="pad-status">Empty</span></div>
-            <div class="pad" data-pad="7"><span class="pad-label">PAD 7</span><span class="pad-status">Empty</span></div>
-            <div class="pad" data-pad="8"><span class="pad-label">PAD 8</span><span class="pad-status">Empty</span></div>
-        </div>
-    </div>
-</div>
-
 <script>
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     let audioCtx;
@@ -390,9 +30,14 @@
     const loopIntervalSlider = document.getElementById('loop-interval');
     const bpmInput = document.getElementById('bpm');
 
+    // Bulletproof Audio Initialization
     function initAudio() {
-        if (!audioCtx) audioCtx = new AudioContext();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (!audioCtx) {
+            audioCtx = new AudioContext();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
     }
 
     function selectPad(id) {
@@ -510,14 +155,24 @@
         data.timerId = setInterval(() => playPad(id, true), intervalMs);
     }
 
+    // New Dual-Action Tap Handler to satisfy strict mobile security rules
     function setupFastTap(element, callback) {
+        let triggered = false;
+
         element.addEventListener('touchstart', (e) => {
             e.preventDefault(); 
+            triggered = true;
+            initAudio(); // Unlocks audio engine instantly
             callback(e);
         }, { passive: false });
 
-        element.addEventListener('mousedown', (e) => {
-            if (e.button === 0) callback(e);
+        element.addEventListener('click', (e) => {
+            if (triggered) { 
+                triggered = false; // Reset flag and skip if touchstart already fired
+                return; 
+            }
+            initAudio(); // Essential fallback step for strict Android WebViews
+            callback(e);
         });
     }
 
@@ -562,6 +217,8 @@
                         targetPad.classList.add('has-sample');
                         targetPad.querySelector('.pad-status').innerText = "Assigned";
                         selectPad(currentPad); 
+                    }, (err) => {
+                        alert("Audio parsing error. Try talking longer.");
                     });
                 };
 
@@ -569,7 +226,7 @@
                 recordBtn.classList.add('recording');
                 recordBtn.innerText = "■ Stop Recording";
             } catch (err) {
-                alert("Audio device input error.");
+                alert("Microphone connection failed. Check your browser site privacy permissions.");
             }
         }
     });
@@ -582,6 +239,57 @@
         });
     });
 
+    // --- Control Sliders Listener Set ---
     trimStartSlider.addEventListener('input', (e) => {
         const val = e.target.value / 100;
-        if (val < 
+        if (val < padsData[currentPad].end) {
+            padsData[currentPad].start = val;
+            document.getElementById('start-val').innerText = e.target.value + '%';
+        } else { e.target.value = padsData[currentPad].start * 100; }
+    });
+
+    trimEndSlider.addEventListener('input', (e) => {
+        const val = e.target.value / 100;
+        if (val > padsData[currentPad].start) {
+            padsData[currentPad].end = val;
+            document.getElementById('end-val').innerText = e.target.value + '%';
+        } else { e.target.value = padsData[currentPad].end * 100; }
+    });
+
+    pitchSlider.addEventListener('input', (e) => {
+        padsData[currentPad].pitch = parseFloat(e.target.value);
+        document.getElementById('pitch-val').innerText = padsData[currentPad].pitch.toFixed(2) + 'x';
+    });
+
+    distSlider.addEventListener('input', (e) => {
+        padsData[currentPad].dist = parseInt(e.target.value);
+        document.getElementById('fx-dist-val').innerText = e.target.value > 0 ? e.target.value + '%' : 'Off';
+    });
+
+    filterSlider.addEventListener('input', (e) => {
+        padsData[currentPad].filter = parseInt(e.target.value);
+        document.getElementById('fx-filter-val').innerText = padsData[currentPad].filter === 20000 ? 'Max' : padsData[currentPad].filter + 'Hz';
+    });
+
+    delaySlider.addEventListener('input', (e) => {
+        padsData[currentPad].delayMix = parseInt(e.target.value);
+        document.getElementById('fx-delay-val').innerText = e.target.value > 0 ? e.target.value + '%' : 'Off';
+    });
+
+    loopIntervalSlider.addEventListener('input', (e) => {
+        padsData[currentPad].interval = parseInt(e.target.value);
+        document.getElementById('interval-val').innerText = e.target.value + (e.target.value == 1 ? ' Beat' : ' Beats');
+        if(padsData[currentPad].isLooping) setupLoop(currentPad);
+    });
+
+    bpmInput.addEventListener('input', (e) => {
+        let val = parseInt(e.target.value);
+        if (isNaN(val) || val < 60) return;
+        bpm = val;
+        for (let id in padsData) {
+            if (padsData[id].isLooping) setupLoop(id);
+        }
+    });
+
+    selectPad(1);
+</script>
