@@ -1,524 +1,454 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>SPLICE</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600&display=swap');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pocket Sampler & Beat Maker</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --panel-color: #1e1e1e;
+            --accent-color: #00e5ff;
+            --pad-color: #333;
+            --pad-active: #00e5ff;
+            --text-color: #ffffff;
+        }
 
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+        body {
+            margin: 0;
+            padding: 10px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
 
-:root{
-  --bg:#0e0e10;--surface:#17171a;--panel:#1f1f24;--border:#2e2e36;
-  --accent:#e8ff47;--red:#ff5c5c;--blue:#5caaff;
-  --text:#d8d8e8;--dim:#555566;--muted:#666680;
-  --mono:'IBM Plex Mono',monospace;
-  --tab-h:56px;--header-h:48px;
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-}
+        h1, h2 {
+            text-align: center;
+            margin: 5px 0;
+            color: var(--accent-color);
+        }
 
-html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--mono);}
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
 
-/* ── HEADER ── */
-#header{
-  position:fixed;top:0;left:0;right:0;height:var(--header-h);
-  background:var(--surface);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 16px;z-index:100;
-}
-.logo{font-size:15px;font-weight:600;letter-spacing:.2em;color:var(--accent)}
-.logo span{color:var(--muted);font-weight:300}
-#rec-pill{
-  display:flex;align-items:center;gap:6px;
-  padding:5px 10px;border-radius:20px;
-  background:var(--panel);border:1px solid var(--border);
-  font-size:10px;letter-spacing:.1em;color:var(--muted);
-  cursor:pointer;transition:all .15s;user-select:none;
-}
-#rec-pill.recording{border-color:var(--red);color:var(--red);background:#1e1010}
-.rec-dot{width:8px;height:8px;border-radius:50%;background:var(--red)}
-.rec-dot.pulse{animation:pulse .8s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+        .panel {
+            background: var(--panel-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
 
-/* ── TABS ── */
-#tabs{
-  position:fixed;bottom:0;left:0;right:0;
-  height:calc(var(--tab-h) + var(--safe-bottom));
-  background:var(--surface);border-top:1px solid var(--border);
-  display:grid;grid-template-columns:repeat(4,1fr);
-  z-index:100;padding-bottom:var(--safe-bottom);
-}
-.tab{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:3px;cursor:pointer;opacity:.45;transition:opacity .15s;
-  font-size:9px;letter-spacing:.12em;padding-top:4px;
-  user-select:none;
-}
-.tab.active{opacity:1;color:var(--accent)}
-.tab-icon{font-size:20px;line-height:1}
+        /* Recorder & Splicer Controls */
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
 
-/* ── PAGES ── */
-#pages{
-  position:fixed;
-  top:var(--header-h);
-  bottom:calc(var(--tab-h) + var(--safe-bottom));
-  left:0;right:0;overflow:hidden;
-}
-.page{
-  position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;
-  -webkit-overflow-scrolling:touch;
-  display:none;flex-direction:column;
-}
-.page.active{display:flex}
-.page::-webkit-scrollbar{display:none}
+        button {
+            background: #444;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            flex: 1;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
 
-/* ── RECORD PAGE ── */
-#page-rec{padding:16px;gap:12px}
+        button:active {
+            filter: brightness(1.2);
+        }
 
-.big-rec-btn{
-  width:100%;padding:22px;
-  background:var(--panel);border:2px solid var(--border);border-radius:12px;
-  display:flex;align-items:center;justify-content:center;gap:14px;
-  font-size:16px;letter-spacing:.12em;color:var(--text);
-  cursor:pointer;transition:all .15s;user-select:none;
-}
-.big-rec-btn:active,.big-rec-btn.recording{border-color:var(--red);color:var(--red);background:#1e1010}
-.big-rec-circle{
-  width:20px;height:20px;border-radius:50%;background:var(--red);flex-shrink:0;
-}
+        button.recording {
+            background: #ff1744;
+            animation: pulse 1s infinite;
+        }
 
-#wave-canvas{
-  width:100%;height:72px;border-radius:8px;
-  background:var(--panel);border:1px solid var(--border);display:block;
-}
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
 
-.section-label{
-  font-size:9px;letter-spacing:.18em;color:var(--muted);
-  text-transform:uppercase;margin-bottom:8px;
-}
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 10px;
+        }
 
-/* Sample cards */
-.sample-card{
-  background:var(--panel);border:1px solid var(--border);border-radius:10px;
-  padding:12px;margin-bottom:10px;
-  transition:border-color .15s;
-}
-.sample-card.selected{border-color:var(--accent)}
-.sc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.sc-name{font-size:12px;color:var(--text)}
-.sc-dur{font-size:10px;color:var(--muted)}
-.mini-wave-wrap{
-  position:relative;height:36px;border-radius:4px;overflow:hidden;
-  background:var(--surface);margin-bottom:8px;touch-action:none;
-}
-canvas.mini-wave{width:100%;height:36px;display:block}
-.trim-bar{
-  position:absolute;top:0;bottom:0;width:4px;background:var(--accent);
-  border-radius:2px;cursor:ew-resize;touch-action:none;z-index:2;
-}
-.trim-fill{
-  position:absolute;top:0;bottom:0;background:rgba(232,255,71,.08);pointer-events:none;
-}
-.sc-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.sc-btn{
-  padding:10px;border-radius:7px;
-  background:var(--surface);border:1px solid var(--border);
-  font-family:var(--mono);font-size:11px;letter-spacing:.06em;
-  color:var(--muted);cursor:pointer;text-align:center;
-  transition:all .12s;user-select:none;
-}
-.sc-btn:active{opacity:.7}
-.sc-btn.accent{border-color:var(--accent);color:var(--accent)}
-.sc-btn.blue{border-color:var(--blue);color:var(--blue)}
+        .slider-group label {
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
 
-/* ── PADS PAGE ── */
-#page-pads{padding:12px;gap:0}
-.pad-grid{
-  display:grid;grid-template-columns:repeat(4,1fr);
-  gap:8px;padding:4px 0;
-}
-.pad{
-  aspect-ratio:1;
-  background:var(--panel);border:1px solid var(--border);border-radius:10px;
-  display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;
-  padding:8px;cursor:pointer;position:relative;overflow:hidden;
-  user-select:none;touch-action:none;transition:border-color .1s;
-  -webkit-tap-highlight-color:transparent;
-}
-.pad::before{
-  content:'';position:absolute;inset:0;background:var(--accent);
-  opacity:0;transition:opacity .06s;border-radius:inherit;
-}
-.pad.hit::before{opacity:.2}
-.pad.loaded{border-color:#383846}
-.pad.loop-on{border-color:var(--blue)}
-.pad.loop-on::after{
-  content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:var(--blue);transform-origin:left;
-  animation:lbar 1s linear infinite;
-}
-@keyframes lbar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-.pad.assign-target{border-color:var(--accent);animation:assignglow .6s infinite alternate}
-@keyframes assignglow{to{box-shadow:0 0 14px 2px rgba(232,255,71,.25)}}
-.pad-num{position:absolute;top:6px;left:8px;font-size:9px;color:var(--muted)}
-.pad-name{font-size:9px;color:var(--muted);width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pad-name.has-sample{color:var(--text)}
-.pad-loop-btn{
-  position:absolute;top:4px;right:4px;
-  width:22px;height:22px;border-radius:5px;
-  background:rgba(255,255,255,.04);border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-  font-size:11px;cursor:pointer;transition:all .12s;
-  color:var(--muted);
-}
-.pad-loop-btn.on{border-color:var(--blue);color:var(--blue);background:rgba(92,170,255,.12)}
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent-color);
+        }
 
-/* interval sheet */
-.interval-sheet{
-  position:fixed;left:0;right:0;bottom:0;
-  background:var(--surface);border-top:1px solid var(--border);
-  border-radius:18px 18px 0 0;padding:20px 16px;
-  z-index:200;transform:translateY(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);
-  padding-bottom:calc(20px + var(--safe-bottom));
-}
-.interval-sheet.open{transform:translateY(0)}
-.sheet-title{font-size:11px;letter-spacing:.15em;color:var(--muted);margin-bottom:14px;text-align:center}
-.interval-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.int-opt{
-  padding:14px 4px;border-radius:8px;text-align:center;
-  background:var(--panel);border:1px solid var(--border);
-  font-size:12px;color:var(--muted);cursor:pointer;
-  transition:all .12s;user-select:none;
-}
-.int-opt:active{opacity:.7}
-.int-opt.active{border-color:var(--blue);color:var(--blue);background:rgba(92,170,255,.1)}
-.sheet-close{
-  width:100%;padding:14px;margin-top:12px;
-  background:var(--panel);border:1px solid var(--border);border-radius:8px;
-  font-family:var(--mono);font-size:12px;color:var(--muted);
-  cursor:pointer;text-align:center;
-}
+        /* Pad Grid */
+        .pad-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 10px;
+        }
 
-/* ── FX PAGE ── */
-#page-fx{padding:16px;gap:16px}
-#fx-sample-selector{
-  background:var(--panel);border:1px solid var(--border);border-radius:8px;
-  padding:10px 14px;font-size:11px;color:var(--muted);
-  display:flex;align-items:center;justify-content:space-between;
-}
-#fx-sample-name{color:var(--text)}
+        .pad {
+            background: var(--pad-color);
+            border: 2px solid #555;
+            border-radius: 10px;
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
 
-.fx-sliders{display:flex;flex-direction:column;gap:14px}
-.fx-row{display:flex;flex-direction:column;gap:6px}
-.fx-label-row{display:flex;justify-content:space-between;align-items:center}
-.fx-label{font-size:10px;letter-spacing:.14em;color:var(--muted)}
-.fx-val{font-size:10px;color:var(--accent)}
-.fx-slider{
-  -webkit-appearance:none;appearance:none;
-  width:100%;height:36px;border-radius:6px;
-  background:var(--panel);border:1px solid var(--border);
-  outline:none;cursor:pointer;padding:0 2px;
-}
-.fx-slider::-webkit-slider-thumb{
-  -webkit-appearance:none;
-  width:28px;height:28px;border-radius:6px;
-  background:var(--surface);border:2px solid var(--accent);
-  cursor:pointer;
-}
-.fx-slider::-webkit-slider-runnable-track{height:6px;background:var(--border);border-radius:3px}
+        .pad.selected {
+            border-color: var(--accent-color);
+        }
 
-.fx-toggles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.fx-tog{
-  padding:14px;border-radius:8px;text-align:center;
-  background:var(--panel);border:1px solid var(--border);
-  font-size:11px;letter-spacing:.1em;color:var(--muted);
-  cursor:pointer;user-select:none;transition:all .15s;
-}
-.fx-tog.on{border-color:var(--accent);color:var(--accent);background:rgba(232,255,71,.08)}
+        .pad.playing {
+            background: var(--pad-active);
+            color: #000;
+            box-shadow: 0 0 15px var(--accent-color);
+        }
 
-/* ── SETTINGS PAGE ── */
-#page-settings{padding:16px;gap:12px}
-.settings-row{
-  background:var(--panel);border:1px solid var(--border);border-radius:10px;
-  padding:14px 16px;display:flex;align-items:center;justify-content:space-between;
-}
-.settings-label{font-size:12px;color:var(--text)}
-.settings-sub{font-size:10px;color:var(--muted);margin-top:2px}
-.bpm-ctrl{display:flex;align-items:center;gap:12px}
-.bpm-num{font-size:24px;font-weight:600;color:var(--accent);min-width:52px;text-align:center}
-.bpm-btn{
-  width:36px;height:36px;border-radius:8px;
-  background:var(--surface);border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-  font-size:18px;color:var(--muted);cursor:pointer;user-select:none;
-  transition:all .12s;
-}
-.bpm-btn:active{border-color:var(--accent);color:var(--accent)}
+        .pad-label {
+            pointer-events: none;
+        }
 
-.danger-btn{
-  width:100%;padding:16px;border-radius:10px;
-  background:var(--panel);border:1px solid var(--border);
-  font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--muted);
-  cursor:pointer;text-align:center;transition:all .12s;user-select:none;
-}
-.danger-btn:active{border-color:var(--red);color:var(--red)}
-.export-btn{
-  width:100%;padding:16px;border-radius:10px;
-  background:rgba(232,255,71,.06);border:1px solid var(--accent);
-  font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--accent);
-  cursor:pointer;text-align:center;transition:opacity .12s;user-select:none;
-}
-.export-btn:active{opacity:.6}
+        .pad-status {
+            font-size: 0.7rem;
+            position: absolute;
+            bottom: 5px;
+            opacity: 0.7;
+            pointer-events: none;
+        }
 
-/* ── ASSIGN BANNER ── */
-#assign-banner{
-  position:fixed;top:var(--header-h);left:0;right:0;
-  background:#1e1e14;border-bottom:1px solid var(--accent);
-  padding:10px 16px;font-size:11px;letter-spacing:.1em;color:var(--accent);
-  display:none;z-index:99;text-align:center;
-}
-#assign-banner.show{display:block}
-
-/* ── SHEET BACKDROP ── */
-#backdrop{
-  position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:190;
-  display:none;
-}
-#backdrop.show{display:block}
-
-/* ── TOAST ── */
-#toast{
-  position:fixed;bottom:calc(var(--tab-h) + var(--safe-bottom) + 12px);
-  left:50%;transform:translateX(-50%) translateY(8px);
-  background:var(--panel);border:1px solid var(--border);
-  padding:9px 18px;border-radius:20px;
-  font-size:11px;letter-spacing:.06em;color:var(--text);
-  opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;
-  white-space:nowrap;z-index:300;
-}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-/* empty state */
-.empty-state{
-  flex:1;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:8px;color:var(--muted);font-size:11px;
-  letter-spacing:.1em;padding:40px;text-align:center;
-}
-.empty-icon{font-size:36px;opacity:.3;margin-bottom:4px}
-</style>
+        /* Global BPM */
+        .bpm-panel {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+    </style>
 </head>
 <body>
 
-<!-- HEADER -->
-<div id="header">
-  <div class="logo">Splice<span>/sampler</span></div>
-  <div id="rec-pill" onclick="toggleRecord()">
-    <div class="rec-dot" id="rec-dot"></div>
-    <span id="rec-label">RECORD</span>
-  </div>
+<div class="container">
+    <h1>Pocket Sampler</h1>
+
+    <div class="panel bpm-panel">
+        <div class="slider-group" style="flex: 1; margin: 0;">
+            <label>BPM: <span id="bpm-val">120</span></label>
+            <input type="range" id="bpm" min="60" max="200" value="120">
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2 id="selected-pad-title">Select a Pad to Record</h2>
+        
+        <div class="controls-row">
+            <button id="record-btn">🔴 Record Mic</button>
+        </div>
+
+        <div class="slider-group">
+            <label>Start Trim (Splicing): <span id="start-val">0%</span></label>
+            <input type="range" id="trim-start" min="0" max="100" value="0">
+        </div>
+        <div class="slider-group">
+            <label>End Trim (Splicing): <span id="end-val">100%</span></label>
+            <input type="range" id="trim-end" min="0" max="100" value="100">
+        </div>
+
+        <div class="slider-group">
+            <label>Pitch Shift: <span id="pitch-val">1.0x</span></label>
+            <input type="range" id="fx-pitch" min="0.5" max="2.0" step="0.05" value="1.0">
+        </div>
+        <div class="slider-group">
+            <label>Lo-Fi Distortion: <span id="fx-dist-val">Off</span></label>
+            <input type="range" id="fx-dist" min="0" max="100" value="0">
+        </div>
+
+        <div class="controls-row">
+            <button id="loop-toggle-btn">Loop: OFF</button>
+            <div class="slider-group" style="flex: 1; margin: 0;">
+                <label>Loop Interval (Beats): <span id="interval-val">4</span></label>
+                <input type="range" id="loop-interval" min="1" max="16" step="1" value="4">
+            </div>
+        </div>
+    </div>
+
+    <div class="pad-grid">
+        <div class="pad" data-pad="1"><span class="pad-label">Pad 1</span><span class="pad-status">Empty</span></div>
+        <div class="pad" data-pad="2"><span class="pad-label">Pad 2</span><span class="pad-status">Empty</span></div>
+        <div class="pad" data-pad="3"><span class="pad-label">Pad 3</span><span class="pad-status">Empty</span></div>
+        <div class="pad" data-pad="4"><span class="pad-label">Pad 4</span><span class="pad-status">Empty</span></div>
+        <div class="pad" data-pad="5"><span class="pad-label">Pad 5</span><span class="pad-status">Empty</span></div>
+        <div class="pad" data-pad="6"><span class="pad-label">Pad 6</span><span class="pad-status">Empty</span></div>
+    </div>
 </div>
-
-<!-- MIC PERMISSION BANNER -->
-<div id="mic-banner" style="display:none;position:fixed;top:48px;left:0;right:0;z-index:101;
-  background:#1a1a10;border-bottom:1px solid var(--accent);padding:10px 14px;
-  font-size:11px;line-height:1.5;color:var(--text);gap:10px;align-items:flex-start;
-  font-family:var(--mono)"></div>
-
-<!-- ASSIGN BANNER -->
-<div id="assign-banner">⬚ TAP A PAD TO ASSIGN — <span onclick="exitAssignMode()" style="text-decoration:underline;cursor:pointer">cancel</span></div>
-
-<!-- PAGES -->
-<div id="pages">
-
-  <!-- RECORD / SAMPLES TAB -->
-  <div class="page active" id="page-rec">
-    <div class="big-rec-btn" id="big-rec-btn" onclick="toggleRecord()">
-      <div class="big-rec-circle" id="big-rec-circle"></div>
-      <span id="big-rec-label">RECORD SAMPLE</span>
-    </div>
-    <canvas id="wave-canvas"></canvas>
-    <div class="section-label">SAMPLES (<span id="sample-count">0</span>)</div>
-    <div id="sample-list">
-      <div class="empty-state">
-        <div class="empty-icon">🎙</div>
-        <div>Tap record to capture a sample</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- PADS TAB -->
-  <div class="page" id="page-pads">
-    <div class="pad-grid" id="pad-grid"></div>
-    <div style="height:8px"></div>
-  </div>
-
-  <!-- FX TAB -->
-  <div class="page" id="page-fx">
-    <div id="fx-sample-selector">
-      <span>Sample:</span>
-      <span id="fx-sample-name">— select a sample —</span>
-    </div>
-    <div class="fx-sliders">
-      <div class="fx-row">
-        <div class="fx-label-row"><span class="fx-label">REVERB</span><span class="fx-val" id="val-reverb">0%</span></div>
-        <input type="range" class="fx-slider" id="sl-reverb" min="0" max="100" value="0" oninput="setFx('reverb',this.value)">
-      </div>
-      <div class="fx-row">
-        <div class="fx-label-row"><span class="fx-label">DELAY</span><span class="fx-val" id="val-delay">0%</span></div>
-        <input type="range" class="fx-slider" id="sl-delay" min="0" max="100" value="0" oninput="setFx('delay',this.value)">
-      </div>
-      <div class="fx-row">
-        <div class="fx-label-row"><span class="fx-label">PITCH</span><span class="fx-val" id="val-pitch">0</span></div>
-        <input type="range" class="fx-slider" id="sl-pitch" min="-12" max="12" value="0" oninput="setFx('pitch',this.value)">
-      </div>
-      <div class="fx-row">
-        <div class="fx-label-row"><span class="fx-label">FILTER</span><span class="fx-val" id="val-filter">100%</span></div>
-        <input type="range" class="fx-slider" id="sl-filter" min="0" max="100" value="100" oninput="setFx('filter',this.value)">
-      </div>
-    </div>
-    <div class="fx-toggles">
-      <div class="fx-tog" id="tog-reverse" onclick="toggleFxBool('reverse')">⟵ REVERSE</div>
-      <div class="fx-tog" id="tog-bitcrush" onclick="toggleFxBool('bitcrush')">▓ BITCRUSH</div>
-    </div>
-  </div>
-
-  <!-- SETTINGS TAB -->
-  <div class="page" id="page-settings">
-    <div class="section-label">TEMPO</div>
-    <div class="settings-row">
-      <div>
-        <div class="settings-label">BPM</div>
-        <div class="settings-sub">Affects all loop intervals</div>
-      </div>
-      <div class="bpm-ctrl">
-        <div class="bpm-btn" ontouchstart="startBpmChange(-1)" ontouchend="stopBpmChange()" onclick="changeBpm(-1)">−</div>
-        <div class="bpm-num" id="bpm-display">120</div>
-        <div class="bpm-btn" ontouchstart="startBpmChange(1)" ontouchend="stopBpmChange()" onclick="changeBpm(1)">+</div>
-      </div>
-    </div>
-
-    <div class="section-label" style="margin-top:8px">ACTIONS</div>
-    <div class="danger-btn" onclick="stopAll()">◼ STOP ALL PADS</div>
-    <div class="danger-btn" onclick="clearAllPads()">✕ CLEAR ALL PADS</div>
-    <div class="export-btn" onclick="exportSamples()">↓ EXPORT SAMPLES AS WAV</div>
-  </div>
-
-</div>
-
-<!-- BOTTOM TABS -->
-<div id="tabs">
-  <div class="tab active" data-tab="rec" onclick="switchTab('rec')">
-    <div class="tab-icon">🎙</div>
-    <span>RECORD</span>
-  </div>
-  <div class="tab" data-tab="pads" onclick="switchTab('pads')">
-    <div class="tab-icon">⬛</div>
-    <span>PADS</span>
-  </div>
-  <div class="tab" data-tab="fx" onclick="switchTab('fx')">
-    <div class="tab-icon">🎛</div>
-    <span>FX</span>
-  </div>
-  <div class="tab" data-tab="settings" onclick="switchTab('settings')">
-    <div class="tab-icon">⚙️</div>
-    <span>SETTINGS</span>
-  </div>
-</div>
-
-<!-- LOOP INTERVAL SHEET -->
-<div id="backdrop" onclick="closeIntervalSheet()"></div>
-<div id="interval-sheet" class="interval-sheet">
-  <div class="sheet-title">LOOP INTERVAL — PAD <span id="sheet-pad-num">1</span></div>
-  <div class="interval-grid" id="interval-grid"></div>
-  <div class="sheet-close" onclick="closeIntervalSheet()">Done</div>
-</div>
-
-<div id="toast"></div>
 
 <script>
-// ═══════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════
-let audioCtx = null;
-let mediaStream = null;
-let mediaRecorder = null;
-let isRecording = false;
-let recordChunks = [];
-let analyserNode = null;
-let waveAnimId = null;
-let bpm = 120;
-let bpmHoldTimer = null;
+    // --- Audio Architecture ---
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx;
+    
+    // Structure to hold data for each pad
+    const padsData = {
+        1: { rawBuffer: null, start: 0, end: 1, pitch: 1, dist: 0, isLooping: false, interval: 4, timerId: null },
+        2: { rawBuffer: null, start: 0, end: 1, pitch: 1, dist: 0, isLooping: false, interval: 4, timerId: null },
+        3: { rawBuffer: null, start: 0, end: 1, pitch: 1, dist: 0, isLooping: false, interval: 4, timerId: null },
+        4: { rawBuffer: null, start: 0, end: 1, pitch: 1, dist: 0, isLooping: false, interval: 4, timerId: null },
+        5: { rawBuffer: null, start: 0, end: 1, pitch: 1, dist: 0, isLooping: false, interval: 4, timerId: null },
+        6: { rawBuffer: null, start: 0, end: 1, pitch: 1, dist: 0, isLooping: false, interval: 4, timerId: null },
+    };
 
-let samples = [];
-let selectedSampleId = null;
-let assignMode = false;
-let assignSampleId = null;
-let intervalSheetPad = null;
+    let currentPad = 1;
+    let mediaRecorder;
+    let audioChunks = [];
+    let bpm = 120;
 
-const LOOP_INTERVALS = [
-  {label:'1/32', ms:()=>bpmMs(1/32)},
-  {label:'1/16', ms:()=>bpmMs(1/16)},
-  {label:'1/8',  ms:()=>bpmMs(1/8)},
-  {label:'1/4',  ms:()=>bpmMs(1/4)},
-  {label:'1/2',  ms:()=>bpmMs(1/2)},
-  {label:'1 bar',ms:()=>bpmMs(1)},
-  {label:'2 bar',ms:()=>bpmMs(2)},
-  {label:'Free', ms:()=>0},
-];
-function bpmMs(bars){ return bars*4*60000/bpm; }
+    // DOM Elements
+    const padsEls = document.querySelectorAll('.pad');
+    const recordBtn = document.getElementById('record-btn');
+    const trimStartSlider = document.getElementById('trim-start');
+    const trimEndSlider = document.getElementById('trim-end');
+    const pitchSlider = document.getElementById('fx-pitch');
+    const distSlider = document.getElementById('fx-dist');
+    const loopToggleBtn = document.getElementById('loop-toggle-btn');
+    const loopIntervalSlider = document.getElementById('loop-interval');
+    const bpmSlider = document.getElementById('bpm');
 
-let pads = Array.from({length:16},(_,i)=>({
-  id:i, sampleId:null, volume:0.85,
-  loopEnabled:false, loopIntervalLabel:'1/4',
-  loopTimer:null, activeSource:null,
-}));
+    // Initialize Audio Context on first user tap (Android requirement)
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new AudioContext();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
 
-// ═══════════════════════════════════════════════
-// AUDIO CONTEXT
-// ═══════════════════════════════════════════════
-function ensureCtx(){
-  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-  if(audioCtx.state==='suspended') audioCtx.resume();
-}
+    // --- Pad Selection UI Sync ---
+    function selectPad(id) {
+        currentPad = id;
+        padsEls.forEach(p => p.classList.remove('selected'));
+        document.querySelector(`[data-pad="${id}"]`).classList.add('selected');
+        document.getElementById('selected-pad-title').innerText = `Editing Pad ${id}`;
+        
+        // Update UI Sliders to match current pad configuration
+        const data = padsData[id];
+        trimStartSlider.value = data.start * 100;
+        document.getElementById('start-val').innerText = Math.round(data.start * 100) + '%';
+        trimEndSlider.value = data.end * 100;
+        document.getElementById('end-val').innerText = Math.round(data.end * 100) + '%';
+        pitchSlider.value = data.pitch;
+        document.getElementById('pitch-val').innerText = data.pitch + 'x';
+        distSlider.value = data.dist;
+        document.getElementById('fx-dist-val').innerText = data.dist > 0 ? data.dist + '%' : 'Off';
+        loopToggleBtn.innerText = data.isLooping ? "Loop: ON" : "Loop: OFF";
+        loopToggleBtn.style.background = data.isLooping ? "var(--accent-color)" : "#444";
+        loopToggleBtn.style.color = data.isLooping ? "#000" : "#fff";
+        loopIntervalSlider.value = data.interval;
+        document.getElementById('interval-val').innerText = data.interval;
+    }
 
-// ═══════════════════════════════════════════════
-// MIC PERMISSION
-// ═══════════════════════════════════════════════
-let micPermission = 'unknown'; // 'granted' | 'denied' | 'unknown'
+    // --- Audio Processing Engine ---
+    function playPad(id) {
+        initAudio();
+        const data = padsData[id];
+        if (!data.rawBuffer) return;
 
-async function checkMicPermission(){
-  try{
-    const result = await navigator.permissions.query({name:'microphone'});
-    micPermission = result.state;
-    result.onchange = ()=>{ micPermission = result.state; updateMicUI(); };
-  } catch(e){ micPermission = 'unknown'; }
-  updateMicUI();
-}
+        const padEl = document.querySelector(`[data-pad="${id}"]`);
+        padEl.classList.add('playing');
+        setTimeout(() => padEl.classList.remove('playing'), 150);
 
-function updateMicUI(){
-  const banner = document.getElementById('mic-banner');
-  if(micPermission === 'denied'){
-    banner.style.display = 'flex';
-    banner.innerHTML = `<span>🚫</span><span>Microphone blocked — click the 🔒 icon in Chrome's address bar and allow mic access, then reload.</span>`;
-  } else if(micPermission === 'granted'){
-    banner.style.display = 'none';
-  } else {
-    banner.style.display = 'flex';
-    banner.innerHTML = `<span>🎙</span><span>Tap <strong>RECORD</strong> — Chrome will ask for microphone permission.</span><button onclick="dismissMicBanner()" style="margin-left:auto;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px">×</button>`;
-  }
-}
+        // 1. Create Source Node
+        const source = audioCtx.createBufferSource();
+        source.buffer = data.rawBuffer;
+        source.playbackRate.value = data.pitch;
 
-function dismissMicBanner(){
-  document.getElementById('mic-banner').style.display='none';
-}
+        // Calculate Spliced Timings
+        const duration = data.rawBuffer.duration;
+        const startTime = data.start * duration;
+        const durationToPlay = (data.end * duration) - startTime;
 
-// ═══════════════════════════════════════════════
-// TABS
-// ═══════════════════════════════════════════════
-function switchTab(name){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
-  document.getElementById('page-'+name).classList.add
+        let lastNode = source;
+
+        // 2. Optional Lo-Fi Distortion Node
+        if (data.dist > 0) {
+            const distortion = audioCtx.createWaveShaper();
+            distortion.curve = makeDistortionCurve(data.dist * 2);
+            distortion.oversample = '4x';
+            lastNode.connect(distortion);
+            lastNode = distortion;
+        }
+
+        // Connect to Speakers
+        lastNode.connect(audioCtx.destination);
+        
+        // Safety check if dynamic end crop cuts duration short
+        if (durationToPlay > 0) {
+            source.start(0, startTime, durationToPlay);
+        }
+    }
+
+    function makeDistortionCurve(amount) {
+        const k = typeof amount === 'number' ? amount : 50;
+        const n_samples = 44100;
+        const curve = new Float32Array(n_samples);
+        const deg = Math.PI / 180;
+        for (let i = 0 ; i < n_samples; ++i ) {
+            const x = (i * 2) / n_samples - 1;
+            curve[i] = ( (3 + k) * x * 20 * deg ) / ( Math.PI + k * Math.abs(x) );
+        }
+        return curve;
+    }
+
+    // --- Looping Engine (Clock Based) ---
+    function setupLoop(id) {
+        const data = padsData[id];
+        if (data.timerId) clearInterval(data.timerId);
+        
+        if (!data.isLooping || !data.rawBuffer) return;
+
+        // Formula: interval in ms = (60 / BPM) * Beats * 1000
+        const intervalMs = (60 / bpm) * data.interval * 1000;
+        
+        // Fire immediately first, then repeat
+        playPad(id);
+        data.timerId = setInterval(() => {
+            playPad(id);
+        }, intervalMs);
+    }
+
+    // --- Recording Logic ---
+    recordBtn.addEventListener('click', async () => {
+        initAudio();
+        if (mediaRecorder && mediaRecorder.state === "recording") {
+            mediaRecorder.stop();
+            recordBtn.classList.remove('recording');
+            recordBtn.innerText = "🔴 Record Mic";
+        } else {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioChunks = [];
+                mediaRecorder = new MediaRecorder(stream);
+                
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                    const arrayBuffer = await audioBlob.arrayBuffer();
+                    
+                    audioCtx.decodeAudioData(arrayBuffer, (buffer) => {
+                        padsData[currentPad].rawBuffer = buffer;
+                        const statusEl = document.querySelector(`[data-pad="${currentPad}"] .pad-status`);
+                        statusEl.innerText = "Sampled";
+                        // Reset settings roughly for new recordings
+                        padsData[currentPad].start = 0;
+                        padsData[currentPad].end = 1;
+                        selectPad(currentPad); 
+                    });
+                };
+
+                mediaRecorder.start();
+                recordBtn.classList.add('recording');
+                recordBtn.innerText = "🛑 Stop Recording";
+            } catch (err) {
+                alert("Microphone access denied or unsupported on this device environment.");
+            }
+        }
+    });
+
+    // --- UI Event Listeners ---
+    padsEls.forEach(pad => {
+        // Support both desktop click and quick mobile touchstart
+        ['touchstart', 'mousedown'].forEach(evtType => {
+            pad.addEventListener(evtType, (e) => {
+                e.preventDefault();
+                const id = parseInt(pad.dataset.pad);
+                selectPad(id);
+                playPad(id);
+            });
+        });
+    });
+
+    trimStartSlider.addEventListener('input', (e) => {
+        const val = e.target.value / 100;
+        if (val < padsData[currentPad].end) {
+            padsData[currentPad].start = val;
+            document.getElementById('start-val').innerText = e.target.value + '%';
+        } else {
+            e.target.value = padsData[currentPad].start * 100;
+        }
+    });
+
+    trimEndSlider.addEventListener('input', (e) => {
+        const val = e.target.value / 100;
+        if (val > padsData[currentPad].start) {
+            padsData[currentPad].end = val;
+            document.getElementById('end-val').innerText = e.target.value + '%';
+        } else {
+            e.target.value = padsData[currentPad].end * 100;
+        }
+    });
+
+    pitchSlider.addEventListener('input', (e) => {
+        padsData[currentPad].pitch = parseFloat(e.target.value);
+        document.getElementById('pitch-val').innerText = e.target.value + 'x';
+    });
+
+    distSlider.addEventListener('input', (e) => {
+        padsData[currentPad].dist = parseInt(e.target.value);
+        document.getElementById('fx-dist-val').innerText = e.target.value > 0 ? e.target.value + '%' : 'Off';
+    });
+
+    loopToggleBtn.addEventListener('click', () => {
+        const data = padsData[currentPad];
+        data.isLooping = !data.isLooping;
+        setupLoop(currentPad);
+        selectPad(currentPad); // Refresh UI styling for the loop button state
+    });
+
+    loopIntervalSlider.addEventListener('input', (e) => {
+        padsData[currentPad].interval = parseInt(e.target.value);
+        document.getElementById('interval-val').innerText = e.target.value;
+        if(padsData[currentPad].isLooping) {
+            setupLoop(currentPad); // Dynamic recalculation if changing interval live
+        }
+    });
+
+    bpmSlider.addEventListener('input', (e) => {
+        bpm = parseInt(e.target.value);
+        document.getElementById('bpm-val').innerText = bpm;
+        // Dynamically adjust all actively running loops to match new tempo
+        for (let id in padsData) {
+            if (padsData[id].isLooping) setupLoop(id);
+        }
+    });
+
+    // Default select pad 1 on boot
+    selectPad(1);
+</script>
+</body>
+</html>
