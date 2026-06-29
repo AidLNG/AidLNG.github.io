@@ -3,214 +3,351 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pocket Sampler & Beat Maker</title>
+    <title>NeonPad - Pocket Sampler</title>
     <style>
         :root {
-            --bg-color: #121212;
-            --panel-color: #1e1e1e;
-            --accent-color: #00e5ff;
-            --pad-color: #333;
-            --pad-active: #00e5ff;
-            --text-color: #ffffff;
+            --bg-dark: #0a0b0d;
+            --panel-bg: #14161d;
+            --panel-border: #222633;
+            --accent-neon: #00ffcc;
+            --accent-alert: #ff3366;
+            --text-main: #f0f2f5;
+            --text-muted: #6c7a9c;
+            --pad-empty: #1e2230;
+            --pad-ready: #2d354d;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             margin: 0;
-            padding: 10px;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 16px;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             user-select: none;
             -webkit-user-select: none;
         }
 
-        h1, h2 {
-            text-align: center;
-            margin: 5px 0;
-            color: var(--accent-color);
-        }
-
         .container {
-            max-width: 600px;
+            max-width: 480px;
             margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
 
-        .panel {
-            background: var(--panel-color);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-
-        /* Recorder & Splicer Controls */
-        .controls-row {
+        /* Top Header & BPM Control */
+        .header-panel {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            padding: 12px 16px;
+            border-radius: 12px;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin: 0;
+            color: var(--accent-neon);
+            text-transform: uppercase;
+        }
+
+        .bpm-control {
+            display: flex;
+            align-items: center;
             gap: 10px;
+            background: rgba(0,0,0,0.2);
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--panel-border);
         }
 
-        button {
-            background: #444;
-            color: white;
+        .bpm-control label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .bpm-control input[type="number"] {
+            background: transparent;
             border: none;
-            padding: 12px;
-            border-radius: 5px;
+            color: var(--text-main);
+            font-size: 1.1rem;
             font-weight: bold;
-            flex: 1;
-            cursor: pointer;
-            touch-action: manipulation;
+            width: 45px;
+            text-align: center;
+            outline: none;
         }
 
-        button:active {
-            filter: brightness(1.2);
-        }
-
-        button.recording {
-            background: #ff1744;
-            animation: pulse 1s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-
-        .slider-group {
+        /* Editor Panel */
+        .editor-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 16px;
             display: flex;
             flex-direction: column;
-            margin-bottom: 10px;
+            gap: 14px;
         }
 
-        .slider-group label {
-            font-size: 0.9rem;
-            margin-bottom: 5px;
+        .panel-header {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin: 0;
+            font-weight: 700;
+        }
+
+        /* Record Button styling */
+        .record-btn {
+            background: linear-gradient(135deg, #2c151b 0%, #1a0a0d 100%);
+            border: 1px solid var(--accent-alert);
+            color: var(--accent-alert);
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .record-btn.recording {
+            background: var(--accent-alert);
+            color: #000;
+            box-shadow: 0 0 15px rgba(255, 51, 102, 0.4);
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Custom Modern Sliders */
+        .control-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .control-group {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--panel-border);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .control-label {
             display: flex;
             justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .control-label span {
+            color: var(--text-main);
+            font-weight: bold;
         }
 
         input[type="range"] {
+            -webkit-appearance: none;
             width: 100%;
-            accent-color: var(--accent-color);
+            height: 4px;
+            background: #252a3a;
+            border-radius: 2px;
+            outline: none;
         }
 
-        /* Pad Grid */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-neon);
+            cursor: pointer;
+            box-shadow: 0 0 6px var(--accent-neon);
+        }
+
+        /* Loop Section Button */
+        .loop-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0,0,0,0.15);
+            padding: 8px;
+            border-radius: 10px;
+            border: 1px solid var(--panel-border);
+        }
+
+        .loop-toggle {
+            background: #252a3a;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        .loop-toggle.active {
+            background: linear-gradient(135deg, rgba(0, 255, 204, 0.1) 0%, rgba(0, 0, 0, 0) 100%);
+            border-color: var(--accent-neon);
+            color: var(--accent-neon);
+            box-shadow: inset 0 0 8px rgba(0, 255, 204, 0.1);
+        }
+
+        /* Pad Hardware Grid */
+        .grid-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 16px;
+        }
+
         .pad-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-top: 10px;
+            gap: 12px;
         }
 
         .pad {
-            background: var(--pad-color);
-            border: 2px solid #555;
-            border-radius: 10px;
-            aspect-ratio: 1;
+            background: var(--pad-empty);
+            border: 1px solid #1c202e;
+            border-radius: 12px;
+            aspect-ratio: 1.1;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
             position: relative;
-            font-weight: bold;
-            font-size: 1.2rem;
+            box-shadow: inset 0 -4px 0 rgba(0,0,0,0.4);
+            transition: all 0.05s ease;
+        }
+
+        .pad.has-sample {
+            background: var(--pad-ready);
+            border-color: #3d4766;
         }
 
         .pad.selected {
-            border-color: var(--accent-color);
+            border: 2px solid var(--accent-neon);
+            box-shadow: inset 0 -4px 0 rgba(0,0,0,0.4), 0 0 10px rgba(0, 255, 204, 0.2);
         }
 
         .pad.playing {
-            background: var(--pad-active);
-            color: #000;
-            box-shadow: 0 0 15px var(--accent-color);
+            background: var(--accent-neon) !important;
+            box-shadow: 0 0 20px var(--accent-neon);
+            transform: translateY(2px);
+            box-shadow: inset 0 -1px 0 rgba(0,0,0,0.4), 0 0 20px var(--accent-neon);
+        }
+
+        .pad.playing .pad-label, .pad.playing .pad-status {
+            color: #050608 !important;
+            font-weight: 800;
         }
 
         .pad-label {
-            pointer-events: none;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .pad.has-sample .pad-label {
+            color: var(--text-main);
         }
 
         .pad-status {
-            font-size: 0.7rem;
-            position: absolute;
-            bottom: 5px;
-            opacity: 0.7;
-            pointer-events: none;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            opacity: 0.6;
         }
 
-        /* Global BPM */
-        .bpm-panel {
-            display: flex;
-            align-items: center;
-            gap: 15px;
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.98); opacity: 0.8; }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Pocket Sampler</h1>
-
-    <div class="panel bpm-panel">
-        <div class="slider-group" style="flex: 1; margin: 0;">
-            <label>BPM: <span id="bpm-val">120</span></label>
-            <input type="range" id="bpm" min="60" max="200" value="120">
+    <div class="header-panel">
+        <h1>NeonPad</h1>
+        <div class="bpm-control">
+            <label>BPM</label>
+            <input type="number" id="bpm" min="60" max="220" value="120">
         </div>
     </div>
 
-    <div class="panel">
-        <h2 id="selected-pad-title">Select a Pad to Record</h2>
+    <div class="editor-panel">
+        <div class="panel-header" id="selected-pad-title">Select a hardware pad</div>
         
-        <div class="controls-row">
-            <button id="record-btn">🔴 Record Mic</button>
+        <button id="record-btn" class="record-btn">● Record From Mic</button>
+
+        <div class="control-row">
+            <div class="control-group">
+                <div class="control-label">Trim Start <span id="start-val">0%</span></div>
+                <input type="range" id="trim-start" min="0" max="100" value="0">
+            </div>
+            <div class="control-group">
+                <div class="control-label">Trim End <span id="end-val">100%</span></div>
+                <input type="range" id="trim-end" min="0" max="100" value="100">
+            </div>
         </div>
 
-        <div class="slider-group">
-            <label>Start Trim (Splicing): <span id="start-val">0%</span></label>
-            <input type="range" id="trim-start" min="0" max="100" value="0">
-        </div>
-        <div class="slider-group">
-            <label>End Trim (Splicing): <span id="end-val">100%</span></label>
-            <input type="range" id="trim-end" min="0" max="100" value="100">
-        </div>
-
-        <div class="slider-group">
-            <label>Pitch Shift: <span id="pitch-val">1.0x</span></label>
-            <input type="range" id="fx-pitch" min="0.5" max="2.0" step="0.05" value="1.0">
-        </div>
-        <div class="slider-group">
-            <label>Lo-Fi Distortion: <span id="fx-dist-val">Off</span></label>
-            <input type="range" id="fx-dist" min="0" max="100" value="0">
+        <div class="control-row">
+            <div class="control-group">
+                <div class="control-label">Pitch Shift <span id="pitch-val">1.0x</span></div>
+                <input type="range" id="fx-pitch" min="0.5" max="2.0" step="0.05" value="1.0">
+            </div>
+            <div class="control-group">
+                <div class="control-label">Lo-Fi Grind <span id="fx-dist-val">Off</span></div>
+                <input type="range" id="fx-dist" min="0" max="100" value="0">
+            </div>
         </div>
 
-        <div class="controls-row">
-            <button id="loop-toggle-btn">Loop: OFF</button>
-            <div class="slider-group" style="flex: 1; margin: 0;">
-                <label>Loop Interval (Beats): <span id="interval-val">4</span></label>
+        <div class="loop-bar">
+            <button id="loop-toggle-btn" class="loop-toggle">Loop Off</button>
+            <div class="control-group" style="flex: 1; border: none; padding: 0 4px; background: transparent;">
+                <div class="control-label">Interval <span id="interval-val">4 Beats</span></div>
                 <input type="range" id="loop-interval" min="1" max="16" step="1" value="4">
             </div>
         </div>
     </div>
 
-    <div class="pad-grid">
-        <div class="pad" data-pad="1"><span class="pad-label">Pad 1</span><span class="pad-status">Empty</span></div>
-        <div class="pad" data-pad="2"><span class="pad-label">Pad 2</span><span class="pad-status">Empty</span></div>
-        <div class="pad" data-pad="3"><span class="pad-label">Pad 3</span><span class="pad-status">Empty</span></div>
-        <div class="pad" data-pad="4"><span class="pad-label">Pad 4</span><span class="pad-status">Empty</span></div>
-        <div class="pad" data-pad="5"><span class="pad-label">Pad 5</span><span class="pad-status">Empty</span></div>
-        <div class="pad" data-pad="6"><span class="pad-label">Pad 6</span><span class="pad-status">Empty</span></div>
+    <div class="grid-panel">
+        <div class="pad-grid">
+            <div class="pad" data-pad="1"><span class="pad-label">PAD A</span><span class="pad-status">Empty</span></div>
+            <div class="pad" data-pad="2"><span class="pad-label">PAD B</span><span class="pad-status">Empty</span></div>
+            <div class="pad" data-pad="3"><span class="pad-label">PAD C</span><span class="pad-status">Empty</span></div>
+            <div class="pad" data-pad="4"><span class="pad-label">PAD D</span><span class="pad-status">Empty</span></div>
+            <div class="pad" data-pad="5"><span class="pad-label">PAD E</span><span class="pad-status">Empty</span></div>
+            <div class="pad" data-pad="6"><span class="pad-label">PAD F</span><span class="pad-status">Empty</span></div>
+        </div>
     </div>
 </div>
 
 <script>
-    // --- Audio Architecture ---
+    // --- Audio System Architecture ---
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     let audioCtx;
     
-    // Structure to hold data for each pad
     const padsData = {
         1: { rawBuffer: null, start: 0, end: 1, pitch: 1, dist: 0, isLooping: false, interval: 4, timerId: null },
         2: { rawBuffer: null, start: 0, end: 1, pitch: 1, dist: 0, isLooping: false, interval: 4, timerId: null },
@@ -234,43 +371,44 @@
     const distSlider = document.getElementById('fx-dist');
     const loopToggleBtn = document.getElementById('loop-toggle-btn');
     const loopIntervalSlider = document.getElementById('loop-interval');
-    const bpmSlider = document.getElementById('bpm');
+    const bpmInput = document.getElementById('bpm');
 
-    // Initialize Audio Context on first user tap (Android requirement)
     function initAudio() {
-        if (!audioCtx) {
-            audioCtx = new AudioContext();
-        }
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
     }
 
-    // --- Pad Selection UI Sync ---
+    // --- UI Dynamic Rendering ---
     function selectPad(id) {
         currentPad = id;
         padsEls.forEach(p => p.classList.remove('selected'));
-        document.querySelector(`[data-pad="${id}"]`).classList.add('selected');
-        document.getElementById('selected-pad-title').innerText = `Editing Pad ${id}`;
+        const activePadEl = document.querySelector(`[data-pad="${id}"]`);
+        activePadEl.classList.add('selected');
         
-        // Update UI Sliders to match current pad configuration
+        document.getElementById('selected-pad-title').innerText = `Editing Pad ${String.fromCharCode(64 + id)}`;
+        
         const data = padsData[id];
         trimStartSlider.value = data.start * 100;
         document.getElementById('start-val').innerText = Math.round(data.start * 100) + '%';
         trimEndSlider.value = data.end * 100;
         document.getElementById('end-val').innerText = Math.round(data.end * 100) + '%';
         pitchSlider.value = data.pitch;
-        document.getElementById('pitch-val').innerText = data.pitch + 'x';
+        document.getElementById('pitch-val').innerText = data.pitch.toFixed(2) + 'x';
         distSlider.value = data.dist;
         document.getElementById('fx-dist-val').innerText = data.dist > 0 ? data.dist + '%' : 'Off';
-        loopToggleBtn.innerText = data.isLooping ? "Loop: ON" : "Loop: OFF";
-        loopToggleBtn.style.background = data.isLooping ? "var(--accent-color)" : "#444";
-        loopToggleBtn.style.color = data.isLooping ? "#000" : "#fff";
+        
+        if (data.isLooping) {
+            loopToggleBtn.innerText = "Loop On";
+            loopToggleBtn.classList.add('active');
+        } else {
+            loopToggleBtn.innerText = "Loop Off";
+            loopToggleBtn.classList.remove('active');
+        }
         loopIntervalSlider.value = data.interval;
-        document.getElementById('interval-val').innerText = data.interval;
+        document.getElementById('interval-val').innerText = data.interval + (data.interval === 1 ? ' Beat' : ' Beats');
     }
 
-    // --- Audio Processing Engine ---
+    // --- Core Sound Generation ---
     function playPad(id) {
         initAudio();
         const data = padsData[id];
@@ -278,21 +416,18 @@
 
         const padEl = document.querySelector(`[data-pad="${id}"]`);
         padEl.classList.add('playing');
-        setTimeout(() => padEl.classList.remove('playing'), 150);
+        setTimeout(() => padEl.classList.remove('playing'), 120);
 
-        // 1. Create Source Node
         const source = audioCtx.createBufferSource();
         source.buffer = data.rawBuffer;
         source.playbackRate.value = data.pitch;
 
-        // Calculate Spliced Timings
         const duration = data.rawBuffer.duration;
         const startTime = data.start * duration;
         const durationToPlay = (data.end * duration) - startTime;
 
         let lastNode = source;
 
-        // 2. Optional Lo-Fi Distortion Node
         if (data.dist > 0) {
             const distortion = audioCtx.createWaveShaper();
             distortion.curve = makeDistortionCurve(data.dist * 2);
@@ -301,10 +436,7 @@
             lastNode = distortion;
         }
 
-        // Connect to Speakers
         lastNode.connect(audioCtx.destination);
-        
-        // Safety check if dynamic end crop cuts duration short
         if (durationToPlay > 0) {
             source.start(0, startTime, durationToPlay);
         }
@@ -322,49 +454,39 @@
         return curve;
     }
 
-    // --- Looping Engine (Clock Based) ---
     function setupLoop(id) {
         const data = padsData[id];
         if (data.timerId) clearInterval(data.timerId);
-        
         if (!data.isLooping || !data.rawBuffer) return;
 
-        // Formula: interval in ms = (60 / BPM) * Beats * 1000
         const intervalMs = (60 / bpm) * data.interval * 1000;
-        
-        // Fire immediately first, then repeat
         playPad(id);
-        data.timerId = setInterval(() => {
-            playPad(id);
-        }, intervalMs);
+        data.timerId = setInterval(() => playPad(id), intervalMs);
     }
 
-    // --- Recording Logic ---
+    // --- Record Logic ---
     recordBtn.addEventListener('click', async () => {
         initAudio();
         if (mediaRecorder && mediaRecorder.state === "recording") {
             mediaRecorder.stop();
             recordBtn.classList.remove('recording');
-            recordBtn.innerText = "🔴 Record Mic";
+            recordBtn.innerText = "● Record From Mic";
         } else {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 audioChunks = [];
                 mediaRecorder = new MediaRecorder(stream);
                 
-                mediaRecorder.ondataavailable = event => {
-                    audioChunks.push(event.data);
-                };
-
+                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
                 mediaRecorder.onstop = async () => {
                     const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
                     const arrayBuffer = await audioBlob.arrayBuffer();
                     
                     audioCtx.decodeAudioData(arrayBuffer, (buffer) => {
                         padsData[currentPad].rawBuffer = buffer;
-                        const statusEl = document.querySelector(`[data-pad="${currentPad}"] .pad-status`);
-                        statusEl.innerText = "Sampled";
-                        // Reset settings roughly for new recordings
+                        const targetPad = document.querySelector(`[data-pad="${currentPad}"]`);
+                        targetPad.classList.add('has-sample');
+                        targetPad.querySelector('.pad-status').innerText = "Loaded";
                         padsData[currentPad].start = 0;
                         padsData[currentPad].end = 1;
                         selectPad(currentPad); 
@@ -373,16 +495,15 @@
 
                 mediaRecorder.start();
                 recordBtn.classList.add('recording');
-                recordBtn.innerText = "🛑 Stop Recording";
+                recordBtn.innerText = "■ Stop Recording";
             } catch (err) {
-                alert("Microphone access denied or unsupported on this device environment.");
+                alert("Microphone connection failed.");
             }
         }
     });
 
-    // --- UI Event Listeners ---
+    // --- Event Subscriptions ---
     padsEls.forEach(pad => {
-        // Support both desktop click and quick mobile touchstart
         ['touchstart', 'mousedown'].forEach(evtType => {
             pad.addEventListener(evtType, (e) => {
                 e.preventDefault();
@@ -415,7 +536,7 @@
 
     pitchSlider.addEventListener('input', (e) => {
         padsData[currentPad].pitch = parseFloat(e.target.value);
-        document.getElementById('pitch-val').innerText = e.target.value + 'x';
+        document.getElementById('pitch-val').innerText = padsData[currentPad].pitch.toFixed(2) + 'x';
     });
 
     distSlider.addEventListener('input', (e) => {
@@ -427,27 +548,24 @@
         const data = padsData[currentPad];
         data.isLooping = !data.isLooping;
         setupLoop(currentPad);
-        selectPad(currentPad); // Refresh UI styling for the loop button state
+        selectPad(currentPad);
     });
 
     loopIntervalSlider.addEventListener('input', (e) => {
         padsData[currentPad].interval = parseInt(e.target.value);
-        document.getElementById('interval-val').innerText = e.target.value;
-        if(padsData[currentPad].isLooping) {
-            setupLoop(currentPad); // Dynamic recalculation if changing interval live
-        }
+        document.getElementById('interval-val').innerText = e.target.value + (e.target.value == 1 ? ' Beat' : ' Beats');
+        if(padsData[currentPad].isLooping) setupLoop(currentPad);
     });
 
-    bpmSlider.addEventListener('input', (e) => {
-        bpm = parseInt(e.target.value);
-        document.getElementById('bpm-val').innerText = bpm;
-        // Dynamically adjust all actively running loops to match new tempo
+    bpmInput.addEventListener('input', (e) => {
+        let val = parseInt(e.target.value);
+        if (isNaN(val) || val < 60) return;
+        bpm = val;
         for (let id in padsData) {
             if (padsData[id].isLooping) setupLoop(id);
         }
     });
 
-    // Default select pad 1 on boot
     selectPad(1);
 </script>
 </body>
