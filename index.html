@@ -529,4 +529,439 @@
       const item = visualQueue.shift();
       highlightStep(item.barStep);
     }
-    requestAnimationFram
+    requestAnimationFrame(visualLoop); return; }
+    const now = audioCtx.currentTime;
+    while(visualQueue.length && visualQueue[0].time <= now){
+      const item = visualQueue.shift();
+      highlightStep(item.barStep);
+    }
+    requestAnimationFrame(visualLoop);
+  }
+  requestAnimationFrame(visualLoop);
+
+  function highlightStep(barStep){
+    document.querySelectorAll('.led').forEach((el,i)=>{
+      el.classList.toggle('now', isPlaying && i===barStep);
+    });
+  }
+
+  function startTransport(){
+    if(isPlaying) return;
+    isPlaying = true;
+    currentAbsStep = 0;
+    nextStepTime = audioCtx.currentTime + 0.05;
+    transportStartTime = nextStepTime;
+    visualQueue = [];
+    schedulerTimer = setInterval(scheduler, lookaheadMs);
+    document.getElementById('playLbl').textContent = 'STOP';
+    document.getElementById('playBtn').classList.add('on');
+  }
+  function stopTransport(){
+    isPlaying = false;
+    clearInterval(schedulerTimer);
+    schedulerTimer = null;
+    document.getElementById('playLbl').textContent = 'PLAY';
+    document.getElementById('playBtn').classList.remove('on');
+    document.querySelectorAll('.led').forEach(el=>el.classList.remove('now'));
+    if(patternRecording) togglePatternRecord();
+  }
+
+  // ---------- Recording ----------
+  let mediaRecorder = null;
+  let recChunks = [];
+  let recStartTs = 0;
+  let recTimerInt = null;
+  let stagedBuffer = null; // decoded AudioBuffer awaiting assignment
+  let stagedTrim = {start:0, end:1};
+  let editingPadIndex = null; // if editing existing pad, index; else null (new sample)
+
+  async function startRecording(){
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      recChunks = [];
+      let mimeType = 'audio/webm';
+      if(!MediaRecorder.isTypeSupported(mimeType)) mimeType = '';
+      mediaRecorder = mimeType ? new MediaRecorder(stream, {mimeType}) : new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = e => { if(e.data.size>0) recChunks.push(e.data); };
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t=>t.stop());
+        const blob = new Blob(recChunks, {type: mediaRecorder.mimeType || 'audio/webm'});
+        const arrBuf = await blob.arrayBuffer();
+        try{
+          const decoded = await audioCtx.decodeAudioData(arrBuf);
+          stagedBuffer = decoded;
+          stagedTrim = {start:0, end:1};
+          editingPadIndex = null;
+          openEditorForNewSample();
+        }catch(err){
+          showToast('Could not decode recording — try again.');
+        }
+      };
+      mediaRecorder.start();
+      recStartTs = performance.now();
+      document.getElementById('recBtn').classList.add('recording');
+      document.getElementById('recLbl').textContent = 'STOP RECORDING';
+      recTimerInt = setInterval(()=>{
+        const s = (performance.now()-recStartTs)/1000;
+        document.getElementById('recTimer').textContent = s.toFixed(1)+'s';
+      }, 100);
+    }catch(err){
+      showToast('Microphone access denied or unavailable.');
+    }
+  }
+  function stopRecording(){
+    if(mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+    clearInterval(recTimerInt);
+    document.getElementById('recBtn').classList.remove('recording');
+    document.getElementById('recLbl').textContent = 'RECORD NEW SAMPLE';
+    document.getElementById('recTimer').textContent = '0.0s';
+  }
+  document.getElementById('recBtn').addEventListener('click', ()=>{
+    ensureAudio();
+    if(mediaRecorder && mediaRecorder.state === 'recording') stopRecording();
+    else startRecording();
+  });
+
+  // ---------- Editor ----------
+  const editorEl = document.getElementById('editor');
+  const waveCanvas = document.getElementById('waveCanvas');
+  const waveWrap = document.getElementById('waveWrap');
+  const handleStart = document.getElementById('handleStart');
+  const handleEnd = document.getElementById('handleEnd');
+  const maskLeft = document.getElementById('maskLeft');
+  const maskRight = document.getElementById('maskRight');
+
+  let editorPadDraft = null; // working copy of fx params while editing
+
+  function defaultDraft(){
+    return {gain:1, rate:1, reverse:false, filterFreq:20000, delayMix:0, reverbMix:0, loopSteps:0};
+  }
+
+  function openEditorForNewSample(){
+    editorPadDraft = defaultDraft();
+    document.getElementById('editorName').textContent = 'NEW SAMPLE';
+    document.getElementById('rerecordBtn').style.display = '';
+    showEditor();
+    drawWaveform(stagedBuffer);
+    syncEditorUI();
+  }
+
+  function openEditorForPad(idx){
+    const pad = pads[idx];
+    if(!pad.buffer){ showToast('Record a sample first, then assign it here.'); return; }
+    editingPadIndex = idx;
+    stagedBuffer = pad.buffer;
+    stagedTrim = {start: pad.trimStart, end: pad.trimEnd};
+    editorPadDraft = {gain:pad.gain, rate:pad.rate, reverse:pad.reverse, filterFreq:pad.filterFreq,
+                       delayMix:pad.delayMix, reverbMix:pad.reverbMix, loopSteps:pad.loopSteps};
+    document.getElementById('editorName').textContent = pad.name;
+    document.getElementById('rerecordBtn').style.display = '';
+    showEditor();
+    drawWaveform(stagedBuffer);
+    syncEditorUI();
+  }
+
+  function showEditor(){ editorEl.classList.add('show'); editorEl.scrollIntoView({behavior:'smooth', block:'start'}); }
+  function hideEditor(){ editorEl.classList.remove('show'); }
+  document.getElementById('editorClose').addEventListener('click', hideEditor);
+
+  document.getElementById('rerecordBtn').addEventListener('click', ()=>{
+    ensureAudio();
+    startRecording();
+  });
+
+  function drawWaveform(buffer){
+    const ctx = waveCanvas.getContext('2d');
+    const w = waveCanvas.width = waveWrap.clientWidth * 2;
+    const h = waveCanvas.height = waveWrap.clientHeight * 2;
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle = '#0f0d14';
+    ctx.fillRect(0,0,w,h);
+    const data = buffer.getChannelData(0);
+    const step = Math.ceil(data.length / w);
+    const mid = h/2;
+    ctx.strokeStyle = '#ffb454';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for(let x=0; x<w; x++){
+      let min=1, max=-1;
+      const start = x*step;
+      for(let i=0;i<step;i++){
+        const v = data[start+i] || 0;
+        if(v<min) min=v;
+        if(v>max) max=v;
+      }
+      ctx.moveTo(x, mid + min*mid*0.9);
+      ctx.lineTo(x, mid + max*mid*0.9);
+    }
+    ctx.stroke();
+    updateTrimUI();
+  }
+
+  function updateTrimUI(){
+    const pct1 = stagedTrim.start*100, pct2 = stagedTrim.end*100;
+    handleStart.style.left = pct1+'%';
+    handleEnd.style.left = pct2+'%';
+    maskLeft.style.width = pct1+'%';
+    maskRight.style.width = (100-pct2)+'%';
+  }
+
+  function bindDrag(handle, isStart){
+    let dragging = false;
+    function onMove(clientX){
+      const rect = waveWrap.getBoundingClientRect();
+      let frac = (clientX - rect.left) / rect.width;
+      frac = Math.max(0, Math.min(1, frac));
+      if(isStart){ stagedTrim.start = Math.min(frac, stagedTrim.end - 0.02); }
+      else { stagedTrim.end = Math.max(frac, stagedTrim.start + 0.02); }
+      updateTrimUI();
+    }
+    handle.addEventListener('pointerdown', e=>{ dragging=true; handle.setPointerCapture(e.pointerId); });
+    handle.addEventListener('pointermove', e=>{ if(dragging) onMove(e.clientX); });
+    handle.addEventListener('pointerup', ()=>{ dragging=false; });
+    handle.addEventListener('pointercancel', ()=>{ dragging=false; });
+  }
+  bindDrag(handleStart, true);
+  bindDrag(handleEnd, false);
+
+  // sliders
+  const volSlider = document.getElementById('volSlider');
+  const pitchSlider = document.getElementById('pitchSlider');
+  const filterSlider = document.getElementById('filterSlider');
+  const delaySlider = document.getElementById('delaySlider');
+  const reverbSlider = document.getElementById('reverbSlider');
+
+  volSlider.addEventListener('input', ()=>{
+    editorPadDraft.gain = volSlider.value/100;
+    document.getElementById('volOut').textContent = volSlider.value+'%';
+  });
+  pitchSlider.addEventListener('input', ()=>{
+    editorPadDraft.rate = pitchSlider.value/100;
+    document.getElementById('pitchOut').textContent = (pitchSlider.value/100).toFixed(2)+'×';
+  });
+  filterSlider.addEventListener('input', ()=>{
+    const v = +filterSlider.value;
+    // map 0-100 to 200Hz - 20000Hz (log)
+    const freq = Math.round(200 * Math.pow(100, v/100));
+    editorPadDraft.filterFreq = v>=99 ? 20000 : freq;
+    document.getElementById('filterOut').textContent = v>=99 ? 'OPEN' : freq+'Hz';
+  });
+  delaySlider.addEventListener('input', ()=>{
+    editorPadDraft.delayMix = delaySlider.value/100;
+    document.getElementById('delayOut').textContent = delaySlider.value+'%';
+  });
+  reverbSlider.addEventListener('input', ()=>{
+    editorPadDraft.reverbMix = reverbSlider.value/100;
+    document.getElementById('reverbOut').textContent = reverbSlider.value+'%';
+  });
+
+  document.getElementById('reverseBtn').addEventListener('click', ()=>{
+    editorPadDraft.reverse = !editorPadDraft.reverse;
+    document.getElementById('reverseBtn').classList.toggle('on', editorPadDraft.reverse);
+  });
+
+  document.getElementById('previewBtn').addEventListener('click', ()=>{
+    ensureAudio();
+    const tmp = {
+      buffer: stagedBuffer, reversedBuffer:null,
+      trimStart: stagedTrim.start, trimEnd: stagedTrim.end,
+      gain: editorPadDraft.gain, rate: editorPadDraft.rate, reverse: editorPadDraft.reverse,
+      filterFreq: editorPadDraft.filterFreq, delayMix: editorPadDraft.delayMix, reverbMix: editorPadDraft.reverbMix
+    };
+    triggerPad(tmp, audioCtx.currentTime);
+  });
+
+  // loop select buttons
+  const loopSelectEl = document.getElementById('loopSelect');
+  LOOP_OPTS.forEach(opt=>{
+    const b = document.createElement('button');
+    b.textContent = opt.label;
+    b.addEventListener('click', ()=>{
+      editorPadDraft.loopSteps = opt.steps;
+      syncLoopButtons();
+    });
+    b.dataset.steps = opt.steps;
+    loopSelectEl.appendChild(b);
+  });
+  function syncLoopButtons(){
+    [...loopSelectEl.children].forEach(b=>{
+      b.classList.toggle('on', +b.dataset.steps === editorPadDraft.loopSteps);
+    });
+  }
+
+  function syncEditorUI(){
+    volSlider.value = editorPadDraft.gain*100;
+    document.getElementById('volOut').textContent = Math.round(editorPadDraft.gain*100)+'%';
+    pitchSlider.value = editorPadDraft.rate*100;
+    document.getElementById('pitchOut').textContent = editorPadDraft.rate.toFixed(2)+'×';
+    const openVal = editorPadDraft.filterFreq >= 20000 ? 100 : Math.round(100*Math.log(editorPadDraft.filterFreq/200)/Math.log(100));
+    filterSlider.value = openVal;
+    document.getElementById('filterOut').textContent = editorPadDraft.filterFreq>=20000 ? 'OPEN' : Math.round(editorPadDraft.filterFreq)+'Hz';
+    delaySlider.value = editorPadDraft.delayMix*100;
+    document.getElementById('delayOut').textContent = Math.round(editorPadDraft.delayMix*100)+'%';
+    reverbSlider.value = editorPadDraft.reverbMix*100;
+    document.getElementById('reverbOut').textContent = Math.round(editorPadDraft.reverbMix*100)+'%';
+    document.getElementById('reverseBtn').classList.toggle('on', editorPadDraft.reverse);
+    syncLoopButtons();
+  }
+
+  // save grid (assign to a pad slot)
+  const saveGrid = document.getElementById('saveGrid');
+  pads.forEach((p,i)=>{
+    const b = document.createElement('button');
+    b.textContent = i+1;
+    b.style.borderColor = p.color;
+    b.addEventListener('click', ()=> assignToPad(i));
+    saveGrid.appendChild(b);
+  });
+
+  function assignToPad(idx){
+    const pad = pads[idx];
+    pad.buffer = stagedBuffer;
+    pad.reversedBuffer = null;
+    pad.trimStart = stagedTrim.start;
+    pad.trimEnd = stagedTrim.end;
+    pad.gain = editorPadDraft.gain;
+    pad.rate = editorPadDraft.rate;
+    pad.reverse = editorPadDraft.reverse;
+    pad.filterFreq = editorPadDraft.filterFreq;
+    pad.delayMix = editorPadDraft.delayMix;
+    pad.reverbMix = editorPadDraft.reverbMix;
+    pad.loopSteps = editorPadDraft.loopSteps;
+    if(pad.name.startsWith('PAD ') || editingPadIndex===null) pad.name = 'SMP ' + (idx+1);
+    renderPads();
+    hideEditor();
+    showToast('Saved to Pad ' + (idx+1));
+  }
+
+  document.getElementById('applyBtn').addEventListener('click', ()=>{
+    if(editingPadIndex !== null) assignToPad(editingPadIndex);
+    else showToast('Tap a pad number below to save this sample.');
+  });
+
+  // ---------- Pads UI ----------
+  const padGrid = document.getElementById('padGrid');
+  function renderPads(){
+    padGrid.innerHTML = '';
+    pads.forEach(pad=>{
+      const el = document.createElement('div');
+      el.className = 'pad' + (pad.buffer ? '' : ' empty');
+      el.dataset.id = pad.id;
+      el.style.setProperty('--pad-color', pad.color);
+      const loopLabel = LOOP_OPTS.find(o=>o.steps===pad.loopSteps).label;
+      el.innerHTML = `
+        <div class="pad-top">
+          <span class="num mono">0${pad.id+1}</span>
+          <span class="gear" data-edit="${pad.id}">⚙</span>
+        </div>
+        <div class="pad-name">${pad.buffer ? pad.name : 'Empty — tap ⚙ after recording'}</div>
+        <div class="pad-meta">
+          <span>${pad.buffer ? Math.round((pad.trimEnd-pad.trimStart)* (pad.buffer.duration) *100)/100 + 's' : '--'}</span>
+          ${pad.loopSteps>0 ? `<span class="loop-chip">LOOP ${loopLabel}</span>` : '<span></span>'}
+        </div>
+        <div class="bar"></div>
+      `;
+      el.addEventListener('pointerdown', (e)=>{
+        if(e.target.dataset.edit !== undefined && e.target.matches('[data-edit]')) return;
+        hitPad(pad.id);
+      });
+      el.querySelector('[data-edit]').addEventListener('pointerdown', (e)=>{
+        e.stopPropagation();
+        openEditorForPad(pad.id);
+      });
+      padGrid.appendChild(el);
+    });
+  }
+
+  function hitPad(idx){
+    ensureAudio();
+    const pad = pads[idx];
+    if(!pad.buffer){ showToast('This pad is empty — record a sample and assign it.'); return; }
+    triggerPad(pad, audioCtx.currentTime);
+    if(patternRecording && isPlaying){
+      const elapsed = audioCtx.currentTime - transportStartTime;
+      const sd = stepDuration();
+      let absStep = Math.round(elapsed/sd);
+      if(absStep < 0) absStep = 0;
+      const barStep = ((absStep % STEPS) + STEPS) % STEPS;
+      pattern[barStep].add(idx);
+      flashLed(barStep);
+    }
+  }
+  function flashLed(barStep){
+    const leds = document.querySelectorAll('.led');
+    if(leds[barStep]){
+      leds[barStep].style.background = '#ff4d6d';
+      setTimeout(()=>{ leds[barStep].style.background=''; }, 180);
+    }
+  }
+
+  // ---------- Steps strip ----------
+  const stepsStrip = document.getElementById('stepsStrip');
+  for(let i=0;i<STEPS;i++){
+    const led = document.createElement('div');
+    led.className = 'led' + (i%4===0 ? ' beat' : '');
+    stepsStrip.appendChild(led);
+  }
+
+  // ---------- Transport controls ----------
+  document.getElementById('playBtn').addEventListener('click', ()=>{
+    ensureAudio();
+    if(isPlaying) stopTransport(); else startTransport();
+  });
+  document.getElementById('muteBtn').addEventListener('click', ()=>{
+    ensureAudio();
+    isMuted = !isMuted;
+    document.getElementById('muteBtn').classList.toggle('on', isMuted);
+    if(masterGain) masterGain.gain.setTargetAtTime(isMuted?0:1, audioCtx.currentTime, 0.02);
+  });
+  document.getElementById('bpmUp').addEventListener('click', ()=>setBpm(bpm+1));
+  document.getElementById('bpmDown').addEventListener('click', ()=>setBpm(bpm-1));
+  function setBpm(v){
+    bpm = Math.max(40, Math.min(220, v));
+    document.getElementById('bpmVal').textContent = bpm;
+    if(delayNode) delayNode.delayTime.setTargetAtTime(stepDuration()*2, audioCtx.currentTime, 0.05);
+  }
+
+  document.getElementById('patRecBtn').addEventListener('click', togglePatternRecord);
+  function togglePatternRecord(){
+    ensureAudio();
+    patternRecording = !patternRecording;
+    document.getElementById('patRecBtn').classList.toggle('on', patternRecording);
+    if(patternRecording && !isPlaying) startTransport();
+    showToast(patternRecording ? 'Recording pattern — tap pads on the beat' : 'Pattern recording stopped');
+  }
+  document.getElementById('patClearBtn').addEventListener('click', ()=>{
+    pattern = Array.from({length: STEPS}, () => new Set());
+    showToast('Pattern cleared');
+  });
+
+  // ---------- Utility ----------
+  let toastTimer = null;
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>t.classList.remove('show'), 1800);
+  }
+
+  function ensureAudio(){
+    if(!audioCtx) initAudio();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  document.getElementById('startBtn').addEventListener('click', ()=>{
+    ensureAudio();
+    document.getElementById('startOverlay').style.display = 'none';
+  });
+
+  window.addEventListener('resize', ()=>{
+    if(editorEl.classList.contains('show') && stagedBuffer) drawWaveform(stagedBuffer);
+  });
+
+  renderPads();
+})();
+</script>
+</body>
+</html>
